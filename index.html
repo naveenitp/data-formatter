@@ -83,6 +83,46 @@
         <button class="ql-btn" data-mode="py">Python list</button>
       </div>
     </div>
+
+    <div class="panel" id="panel-sql">
+      <div class="panel-label">04 — SQL query builder</div>
+
+      <div class="sql-saved">
+        <div class="option-group-title">Saved queries</div>
+        <div class="pills" id="sql-saved-list"></div>
+      </div>
+
+      <div class="option-group" style="margin-top:14px">
+        <div class="sql-query-header">
+          <div class="option-group-title">Query template &nbsp;<span class="ql" style="text-transform:none;letter-spacing:0">— use <code>{{IN}}</code> where values go</span></div>
+        </div>
+        <textarea id="sql-template" spellcheck="false" style="min-height:110px;margin-top:6px" placeholder="SELECT *&#10;FROM your_table&#10;WHERE column_name IN ({{IN}});"></textarea>
+      </div>
+
+      <div class="option-group">
+        <div class="option-group-title">Quote style for values</div>
+        <div class="pills" id="sql-quote-opts">
+          <button class="pill active" data-val="single">Single <code>'…'</code></button>
+          <button class="pill" data-val="double">Double <code>"…"</code></button>
+          <button class="pill" data-val="none">No quotes (numbers)</button>
+        </div>
+      </div>
+
+      <div class="output-actions" style="margin-top:10px">
+        <span class="stat" id="sql-stat"></span>
+        <div class="btns">
+          <button class="btn-icon" id="btn-sql-run">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Build query
+          </button>
+          <button class="btn-icon" id="btn-sql-copy" title="Copy query">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+      </div>
+      <textarea id="sql-output" readonly spellcheck="false" style="min-height:120px;margin-top:8px"></textarea>
+    </div>
   </main>
 
   <footer>
@@ -91,8 +131,9 @@
 
   <div id="toast">Copied!</div>
 
-  <!-- Config loaded first so app.js can read ADDONS -->
+  <!-- Configs loaded first so app.js can read ADDONS + SQL_TEMPLATES -->
   <script src="addons.config.js"></script>
+  <script src="sql.config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

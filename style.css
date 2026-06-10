@@ -377,3 +377,26 @@ footer a:hover { color: var(--accent-hover); }
   header, main, footer { padding-left: 1rem; padding-right: 1rem; }
   .addon-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* SQL Query Builder panel */
+#panel-sql .option-group-title code {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  background: var(--bg-input);
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  color: var(--accent-hover);
+}
+
+#sql-saved-list { margin-top: 6px; }
+
+#btn-sql-run {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent-hover);
+}
+
+#btn-sql-run:hover {
+  background: rgba(124, 106, 247, 0.25);
+}

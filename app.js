@@ -233,3 +233,80 @@ function showToast() {
 buildAddonGrid();
 $('input').value = '1254251\n1254152\n2542541';
 format();
+
+// ─── SQL Query Builder ────────────────────────────────────────────────────────
+
+let sqlQuoteStyle = 'single';
+
+function buildSqlSavedList() {
+  const list = $('sql-saved-list');
+  if (!list || typeof SQL_TEMPLATES === 'undefined') return;
+  list.innerHTML = '';
+  SQL_TEMPLATES.forEach(tpl => {
+    const btn = document.createElement('button');
+    btn.className = 'pill';
+    btn.textContent = tpl.label;
+    btn.addEventListener('click', () => {
+      $('sql-template').value = tpl.query;
+      buildQuery();
+    });
+    list.appendChild(btn);
+  });
+}
+
+function getSqlQuotedItems() {
+  const raw = $('input').value;
+  let items = getItems(raw);
+  items = applyAddons(items);
+  return items.map(x => {
+    if (sqlQuoteStyle === 'single') return `'${x.replace(/'/g, "''")}'`;
+    if (sqlQuoteStyle === 'double') return `"${x.replace(/"/g, '""')}"`;
+    return x;
+  });
+}
+
+function buildQuery() {
+  const template = $('sql-template').value.trim();
+  if (!template) { $('sql-output').value = ''; return; }
+
+  const items = getSqlQuotedItems();
+  const inList = items.join(', ');
+  const result = template.replace(/\{\{IN\}\}/g, inList);
+
+  $('sql-output').value = result;
+  $('sql-stat').textContent = items.length + ' values injected';
+}
+
+// SQL quote pills
+document.querySelectorAll('#sql-quote-opts .pill').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('#sql-quote-opts .pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    sqlQuoteStyle = el.dataset.val;
+    if ($('sql-output').value) buildQuery();
+  });
+});
+
+$('btn-sql-run').addEventListener('click', buildQuery);
+$('sql-template').addEventListener('input', buildQuery);
+
+// auto-rebuild when input data changes
+const _origFormat = format;
+window.format = function() { _origFormat(); if ($('sql-output').value) buildQuery(); };
+
+$('btn-sql-copy').addEventListener('click', () => {
+  const val = $('sql-output').value;
+  if (!val) return;
+  navigator.clipboard.writeText(val).then(showToast).catch(() => {
+    $('sql-output').select();
+    document.execCommand('copy');
+    showToast();
+  });
+});
+
+// Init SQL panel
+buildSqlSavedList();
+if (typeof SQL_TEMPLATES !== 'undefined' && SQL_TEMPLATES.length) {
+  $('sql-template').value = SQL_TEMPLATES[0].query;
+  buildQuery();
+}
