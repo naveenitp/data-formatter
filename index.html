@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DataFmt — Raw Data Formatter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="logo">DataFmt<span class="dot">.</span></div>
+    <p class="tagline">Paste raw data. Format it instantly.</p>
+  </header>
+
+  <main>
+    <div class="panel" id="panel-input">
+      <div class="panel-label">01 — Input</div>
+      <textarea id="input" spellcheck="false" placeholder="Paste your raw data here&#10;One item per line, or space / comma separated&#10;&#10;1254251&#10;1254152&#10;2542541"></textarea>
+      <div class="input-meta" id="input-meta">0 items detected</div>
+    </div>
+
+    <div class="panel" id="panel-options">
+      <div class="panel-label">02 — Format options</div>
+
+      <div class="option-group">
+        <div class="option-group-title">Quote style</div>
+        <div class="pills" id="quote-opts">
+          <button class="pill active" data-val="single">Single &nbsp;<code>'…'</code></button>
+          <button class="pill" data-val="double">Double &nbsp;<code>"…"</code></button>
+          <button class="pill" data-val="backtick">Backtick &nbsp;<code>`…`</code></button>
+          <button class="pill" data-val="none">None</button>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <div class="option-group-title">Separator</div>
+        <div class="pills" id="sep-opts">
+          <button class="pill active" data-val=", ">Comma + space</button>
+          <button class="pill" data-val=",">Comma only</button>
+          <button class="pill" data-val=" | ">Pipe</button>
+          <button class="pill" data-val="\n">Newline</button>
+          <button class="pill" data-val="custom">Custom…</button>
+        </div>
+        <input type="text" id="custom-sep" class="custom-input" placeholder="Enter separator…" value=" ; " />
+      </div>
+
+      <div class="option-group">
+        <div class="option-group-title">Addons</div>
+        <div class="addon-grid">
+
+          <label class="addon-card">
+            <input type="checkbox" id="cb-trim" checked />
+            <div class="addon-info">
+              <span class="addon-name">Trim whitespace</span>
+              <span class="addon-desc">Remove leading/trailing spaces</span>
+            </div>
+          </label>
+
+          <label class="addon-card">
+            <input type="checkbox" id="cb-empty" checked />
+            <div class="addon-info">
+              <span class="addon-name">Skip empty lines</span>
+              <span class="addon-desc">Ignore blank lines</span>
+            </div>
+          </label>
+
+          <label class="addon-card">
+            <input type="checkbox" id="cb-dedup" />
+            <div class="addon-info">
+              <span class="addon-name">Remove duplicates</span>
+              <span class="addon-desc">Keep only unique values</span>
+            </div>
+          </label>
+
+          <label class="addon-card">
+            <input type="checkbox" id="cb-sort" />
+            <div class="addon-info">
+              <span class="addon-name">Sort items</span>
+              <span class="addon-desc">Numeric or alphabetical</span>
+            </div>
+          </label>
+
+          <label class="addon-card">
+            <input type="checkbox" id="cb-upper" />
+            <div class="addon-info">
+              <span class="addon-name">Uppercase</span>
+              <span class="addon-desc">Convert all items to UPPER</span>
+            </div>
+          </label>
+
+          <label class="addon-card">
+            <input type="checkbox" id="cb-lower" />
+            <div class="addon-info">
+              <span class="addon-name">Lowercase</span>
+              <span class="addon-desc">Convert all items to lower</span>
+            </div>
+          </label>
+
+          <label class="addon-card">
+            <input type="checkbox" id="cb-numonly" />
+            <div class="addon-info">
+              <span class="addon-name">Numbers only</span>
+              <span class="addon-desc">Filter non-numeric items</span>
+            </div>
+          </label>
+
+          <label class="addon-card">
+            <input type="checkbox" id="cb-wrap" />
+            <div class="addon-info">
+              <span class="addon-name">Wrap in brackets</span>
+              <span class="addon-desc">Surround result with ( ) or [ ]</span>
+            </div>
+            <div class="sub-opts" id="wrap-opts">
+              <button class="pill active" data-grp="bracket" data-val="[">&nbsp;[ ]&nbsp;</button>
+              <button class="pill" data-grp="bracket" data-val="(">&nbsp;( )&nbsp;</button>
+            </div>
+          </label>
+
+          <label class="addon-card">
+            <input type="checkbox" id="cb-prefix" />
+            <div class="addon-info">
+              <span class="addon-name">Prefix</span>
+              <span class="addon-desc">Prepend text to each item</span>
+            </div>
+            <div class="sub-opts" id="prefix-row">
+              <input type="text" class="sub-input" id="prefix-val" placeholder="e.g. ID_" />
+            </div>
+          </label>
+
+          <label class="addon-card">
+            <input type="checkbox" id="cb-suffix" />
+            <div class="addon-info">
+              <span class="addon-name">Suffix</span>
+              <span class="addon-desc">Append text to each item</span>
+            </div>
+            <div class="sub-opts" id="suffix-row">
+              <input type="text" class="sub-input" id="suffix-val" placeholder="e.g. _END" />
+            </div>
+          </label>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-output">
+      <div class="panel-label">03 — Output</div>
+      <div class="output-actions">
+        <span class="stat" id="stat"></span>
+        <div class="btns">
+          <button class="btn-icon" id="btn-copy" title="Copy to clipboard">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </button>
+          <button class="btn-icon" id="btn-download" title="Download as .txt">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download
+          </button>
+          <button class="btn-icon btn-danger" id="btn-clear" title="Clear all">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            Clear
+          </button>
+        </div>
+      </div>
+      <textarea id="output" readonly spellcheck="false"></textarea>
+
+      <div class="quick-templates">
+        <span class="ql">Quick templates:</span>
+        <button class="ql-btn" data-mode="sql">SQL IN (…)</button>
+        <button class="ql-btn" data-mode="js">JS Array</button>
+        <button class="ql-btn" data-mode="csv">CSV row</button>
+        <button class="ql-btn" data-mode="py">Python list</button>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>DataFmt — open source · <a href="https://github.com/" target="_blank" rel="noopener">GitHub</a></p>
+  </footer>
+
+  <div id="toast">Copied!</div>
+
+  <script src="app.js"></script>
+</body>
+</html>
