@@ -49,99 +49,8 @@
 
       <div class="option-group">
         <div class="option-group-title">Addons</div>
-        <div class="addon-grid">
-
-          <label class="addon-card">
-            <input type="checkbox" id="cb-trim" checked />
-            <div class="addon-info">
-              <span class="addon-name">Trim whitespace</span>
-              <span class="addon-desc">Remove leading/trailing spaces</span>
-            </div>
-          </label>
-
-          <label class="addon-card">
-            <input type="checkbox" id="cb-empty" checked />
-            <div class="addon-info">
-              <span class="addon-name">Skip empty lines</span>
-              <span class="addon-desc">Ignore blank lines</span>
-            </div>
-          </label>
-
-          <label class="addon-card">
-            <input type="checkbox" id="cb-dedup" />
-            <div class="addon-info">
-              <span class="addon-name">Remove duplicates</span>
-              <span class="addon-desc">Keep only unique values</span>
-            </div>
-          </label>
-
-          <label class="addon-card">
-            <input type="checkbox" id="cb-sort" />
-            <div class="addon-info">
-              <span class="addon-name">Sort items</span>
-              <span class="addon-desc">Numeric or alphabetical</span>
-            </div>
-          </label>
-
-          <label class="addon-card">
-            <input type="checkbox" id="cb-upper" />
-            <div class="addon-info">
-              <span class="addon-name">Uppercase</span>
-              <span class="addon-desc">Convert all items to UPPER</span>
-            </div>
-          </label>
-
-          <label class="addon-card">
-            <input type="checkbox" id="cb-lower" />
-            <div class="addon-info">
-              <span class="addon-name">Lowercase</span>
-              <span class="addon-desc">Convert all items to lower</span>
-            </div>
-          </label>
-
-          <label class="addon-card">
-            <input type="checkbox" id="cb-numonly" />
-            <div class="addon-info">
-              <span class="addon-name">Numbers only</span>
-              <span class="addon-desc">Filter non-numeric items</span>
-            </div>
-          </label>
-
-          <label class="addon-card">
-            <input type="checkbox" id="cb-wrap" />
-            <div class="addon-info">
-              <span class="addon-name">Wrap in brackets</span>
-              <span class="addon-desc">Surround result with ( ) or [ ]</span>
-            </div>
-            <div class="sub-opts" id="wrap-opts">
-              <button class="pill active" data-grp="bracket" data-val="[">&nbsp;[ ]&nbsp;</button>
-              <button class="pill" data-grp="bracket" data-val="(">&nbsp;( )&nbsp;</button>
-            </div>
-          </label>
-
-          <label class="addon-card">
-            <input type="checkbox" id="cb-prefix" />
-            <div class="addon-info">
-              <span class="addon-name">Prefix</span>
-              <span class="addon-desc">Prepend text to each item</span>
-            </div>
-            <div class="sub-opts" id="prefix-row">
-              <input type="text" class="sub-input" id="prefix-val" placeholder="e.g. ID_" />
-            </div>
-          </label>
-
-          <label class="addon-card">
-            <input type="checkbox" id="cb-suffix" />
-            <div class="addon-info">
-              <span class="addon-name">Suffix</span>
-              <span class="addon-desc">Append text to each item</span>
-            </div>
-            <div class="sub-opts" id="suffix-row">
-              <input type="text" class="sub-input" id="suffix-val" placeholder="e.g. _END" />
-            </div>
-          </label>
-
-        </div>
+        <!-- Populated dynamically from addons.config.js -->
+        <div class="addon-grid" id="addon-grid"></div>
       </div>
     </div>
 
@@ -182,6 +91,8 @@
 
   <div id="toast">Copied!</div>
 
+  <!-- Config loaded first so app.js can read ADDONS -->
+  <script src="addons.config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
