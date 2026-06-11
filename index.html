@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DataFmt — Raw Data Formatter</title>
+  <title>DataFmt</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -11,150 +11,196 @@
 </head>
 <body>
 
+  <!-- ── Sidebar ── -->
   <aside id="sidebar">
     <div class="sidebar-logo">DataFmt<span class="dot">.</span></div>
     <nav>
       <button class="nav-item active" data-page="formatter">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-        Data formatter
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        <span>Data formatter</span>
       </button>
       <button class="nav-item" data-page="sql">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-        SQL queries
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        <span>SQL queries</span>
+      </button>
+      <button class="nav-item" data-page="library">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span>Library</span>
       </button>
     </nav>
     <div class="sidebar-footer">
       <a href="https://github.com/" target="_blank" rel="noopener">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.167 6.839 9.49.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.004.07 1.532 1.032 1.532 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
-        GitHub
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.167 6.839 9.49.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.004.07 1.532 1.032 1.532 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+        <span>GitHub</span>
       </a>
     </div>
   </aside>
 
+  <!-- ── App ── -->
   <div id="app">
 
-    <!-- ── Page: Data Formatter ── -->
+    <!-- Page: Data Formatter -->
     <main class="page active" id="page-formatter">
       <div class="page-header">
         <h1>Data formatter</h1>
         <p>Paste raw values — get a quoted, formatted list instantly.</p>
       </div>
+      <div class="page-cols">
 
-      <div class="panel">
-        <div class="panel-label">Input</div>
-        <textarea id="input" spellcheck="false" placeholder="Paste your raw data here&#10;One item per line, or space / comma separated&#10;&#10;1254251&#10;1254152&#10;2542541"></textarea>
-        <div class="input-meta" id="input-meta">0 items detected</div>
-      </div>
+        <div class="col col-left">
+          <!-- Input -->
+          <section class="card">
+            <div class="card-label">Input</div>
+            <textarea id="input" spellcheck="false" placeholder="1254251&#10;1254152&#10;2542541"></textarea>
+            <div class="input-meta" id="input-meta">0 items detected</div>
+          </section>
 
-      <div class="panel">
-        <div class="panel-label">Format options</div>
-
-        <div class="option-group">
-          <div class="option-group-title">Quote style</div>
-          <div class="pills" id="quote-opts">
-            <button class="pill active" data-val="single">Single &nbsp;<code>'…'</code></button>
-            <button class="pill" data-val="double">Double &nbsp;<code>"…"</code></button>
-            <button class="pill" data-val="backtick">Backtick &nbsp;<code>`…`</code></button>
-            <button class="pill" data-val="none">None</button>
-          </div>
-        </div>
-
-        <div class="option-group">
-          <div class="option-group-title">Separator</div>
-          <div class="pills" id="sep-opts">
-            <button class="pill active" data-val=", ">Comma + space</button>
-            <button class="pill" data-val=",">Comma only</button>
-            <button class="pill" data-val=" | ">Pipe</button>
-            <button class="pill" data-val="\n">Newline</button>
-            <button class="pill" data-val="custom">Custom…</button>
-          </div>
-          <input type="text" id="custom-sep" class="custom-input" placeholder="Enter separator…" value=" ; " />
-        </div>
-
-        <div class="option-group">
-          <div class="option-group-title">Addons</div>
-          <div class="addon-grid" id="addon-grid"></div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-label">Output</div>
-        <div class="output-actions">
-          <span class="stat" id="stat"></span>
-          <div class="btns">
-            <button class="btn-icon" id="btn-copy">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-              Copy
+          <!-- Options (collapsible) -->
+          <section class="card collapsible open" id="sec-fmt-options">
+            <button class="card-toggle" aria-expanded="true">
+              <span class="card-label">Format options</span>
+              <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
-            <button class="btn-icon" id="btn-download">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Download
-            </button>
-            <button class="btn-icon btn-danger" id="btn-clear">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-              Clear
-            </button>
-          </div>
+            <div class="card-body">
+              <div class="option-group">
+                <div class="og-title">Quote style</div>
+                <div class="pills" id="quote-opts">
+                  <button class="pill active" data-val="single">Single <code>'…'</code></button>
+                  <button class="pill" data-val="double">Double <code>"…"</code></button>
+                  <button class="pill" data-val="backtick">Backtick <code>`…`</code></button>
+                  <button class="pill" data-val="none">None</button>
+                </div>
+              </div>
+              <div class="option-group">
+                <div class="og-title">Separator</div>
+                <div class="pills" id="sep-opts">
+                  <button class="pill active" data-val=", ">Comma + space</button>
+                  <button class="pill" data-val=",">Comma only</button>
+                  <button class="pill" data-val=" | ">Pipe</button>
+                  <button class="pill" data-val="\n">Newline</button>
+                  <button class="pill" data-val="custom">Custom…</button>
+                </div>
+                <input type="text" id="custom-sep" class="custom-input" placeholder="Enter separator…" value=" ; " />
+              </div>
+              <div class="option-group mb0">
+                <div class="og-title">Addons</div>
+                <div class="addon-grid" id="addon-grid"></div>
+              </div>
+            </div>
+          </section>
         </div>
-        <textarea id="output" readonly spellcheck="false"></textarea>
-        <div class="quick-templates">
-          <span class="ql">Quick templates:</span>
-          <button class="ql-btn" data-mode="sql">SQL IN (…)</button>
-          <button class="ql-btn" data-mode="js">JS Array</button>
-          <button class="ql-btn" data-mode="csv">CSV row</button>
-          <button class="ql-btn" data-mode="py">Python list</button>
+
+        <div class="col col-right">
+          <!-- Output -->
+          <section class="card">
+            <div class="card-row">
+              <div class="card-label">Output</div>
+              <div class="btns">
+                <button class="btn-icon" id="btn-copy">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy
+                </button>
+                <button class="btn-icon" id="btn-download">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download
+                </button>
+                <button class="btn-icon btn-danger" id="btn-clear">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>Clear
+                </button>
+              </div>
+            </div>
+            <textarea id="output" readonly spellcheck="false"></textarea>
+            <div class="output-foot">
+              <span class="stat" id="stat"></span>
+              <div class="ql-row">
+                <span class="ql">Templates:</span>
+                <button class="ql-btn" data-mode="sql">SQL IN</button>
+                <button class="ql-btn" data-mode="js">JS Array</button>
+                <button class="ql-btn" data-mode="csv">CSV</button>
+                <button class="ql-btn" data-mode="py">Python</button>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </main>
 
-    <!-- ── Page: SQL Queries ── -->
+    <!-- Page: SQL Queries -->
     <main class="page" id="page-sql">
       <div class="page-header">
         <h1>SQL queries</h1>
-        <p>Paste raw values above, build a full query with them injected into <code>IN ({{IN}})</code>.</p>
+        <p>Paste values, pick a saved query, get the full SQL ready to run.</p>
       </div>
+      <div class="page-cols">
 
-      <div class="panel">
-        <div class="panel-label">Input</div>
-        <textarea id="sql-input" spellcheck="false" placeholder="Paste your raw data here&#10;&#10;1254251&#10;1254152&#10;2542541"></textarea>
-        <div class="input-meta" id="sql-input-meta">0 items detected</div>
-      </div>
+        <div class="col col-left">
+          <section class="card">
+            <div class="card-label">Input values</div>
+            <textarea id="sql-input" spellcheck="false" placeholder="1254251&#10;1254152&#10;2542541"></textarea>
+            <div class="input-meta" id="sql-input-meta">0 items detected</div>
+          </section>
 
-      <div class="panel">
-        <div class="panel-label">Saved queries</div>
-        <div class="pills" id="sql-saved-list" style="margin-bottom:4px"></div>
-      </div>
+          <section class="card collapsible open" id="sec-sql-builder">
+            <button class="card-toggle" aria-expanded="true">
+              <span class="card-label">Query builder</span>
+              <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="card-body">
+              <div class="option-group">
+                <div class="og-title">Saved queries</div>
+                <div class="pills" id="sql-saved-list"></div>
+              </div>
+              <div class="option-group">
+                <div class="og-title">Template — use <code class="ic">{{IN}}</code> where values go</div>
+                <textarea id="sql-template" spellcheck="false" style="min-height:96px;margin-top:6px" placeholder="SELECT * FROM table WHERE col IN ({{IN}});"></textarea>
+              </div>
+              <div class="option-group mb0">
+                <div class="og-title">Quote style for values</div>
+                <div class="pills" id="sql-quote-opts">
+                  <button class="pill active" data-val="single">Single <code>'…'</code></button>
+                  <button class="pill" data-val="double">Double <code>"…"</code></button>
+                  <button class="pill" data-val="none">No quotes (numbers)</button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
 
-      <div class="panel">
-        <div class="panel-label">Query template &nbsp;— use <code class="inline-code">{{IN}}</code> where values go</div>
-        <textarea id="sql-template" spellcheck="false" style="min-height:110px" placeholder="SELECT *&#10;FROM your_table&#10;WHERE column_name IN ({{IN}});"></textarea>
-
-        <div class="option-group" style="margin-top:14px">
-          <div class="option-group-title">Quote style for values</div>
-          <div class="pills" id="sql-quote-opts">
-            <button class="pill active" data-val="single">Single <code>'…'</code></button>
-            <button class="pill" data-val="double">Double <code>"…"</code></button>
-            <button class="pill" data-val="none">No quotes (numbers)</button>
-          </div>
+        <div class="col col-right">
+          <section class="card">
+            <div class="card-row">
+              <div class="card-label">Result</div>
+              <div class="btns">
+                <button class="btn-icon btn-primary" id="btn-sql-run">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>Build
+                </button>
+                <button class="btn-icon" id="btn-sql-copy">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy
+                </button>
+              </div>
+            </div>
+            <textarea id="sql-output" readonly spellcheck="false"></textarea>
+            <div class="output-foot"><span class="stat" id="sql-stat"></span></div>
+          </section>
         </div>
       </div>
+    </main>
 
-      <div class="panel">
-        <div class="panel-label">Result</div>
-        <div class="output-actions">
-          <span class="stat" id="sql-stat"></span>
-          <div class="btns">
-            <button class="btn-icon btn-primary" id="btn-sql-run">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              Build query
-            </button>
-            <button class="btn-icon" id="btn-sql-copy">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-              Copy
-            </button>
+    <!-- Page: Library -->
+    <main class="page" id="page-library">
+      <div class="page-header">
+        <h1>Library</h1>
+        <p>Saved SQL queries and Linux commands — click any snippet to copy instantly.</p>
+      </div>
+      <div class="page-cols single">
+        <div class="col" style="width:100%">
+          <div class="lib-toolbar">
+            <input type="text" id="lib-search" class="lib-search" placeholder="Search snippets…" />
+            <div class="btns">
+              <button class="btn-icon" id="btn-lib-expand">Expand all</button>
+              <button class="btn-icon" id="btn-lib-collapse">Collapse all</button>
+            </div>
           </div>
+          <div id="library-body"></div>
         </div>
-        <textarea id="sql-output" readonly spellcheck="false" style="min-height:130px"></textarea>
       </div>
     </main>
 
@@ -164,6 +210,7 @@
 
   <script src="addons.config.js"></script>
   <script src="sql.config.js"></script>
+  <script src="library.config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

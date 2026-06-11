@@ -49,13 +49,13 @@ WHERE vc_number IN ({{IN}});`,
   // WHERE serial_number IN ({{IN}});`,
   // },
   //
-   {
-      id: 'update_trash',
-      label: 'Mark as trashed',
-      query:
-      `UPDATE eb_stock
-      SET is_trash = 1, trashed_date = NOW()
-       WHERE serial_number IN ({{IN}});`,
-   },
+  // {
+  //   id: 'update_trash',
+  //   label: 'Mark as trashed',
+  //   query:
+  // `UPDATE eb_stock
+  // SET is_trash = 1, trashed_date = NOW()
+  // WHERE serial_number IN ({{IN}});`,
+  // },
 
 ];
