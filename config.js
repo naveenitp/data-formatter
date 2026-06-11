@@ -354,7 +354,7 @@ WHERE t1.id > t2.id AND t1.col = t2.col;`,
       {
         label: 'Bulk rename files',
         desc:  'Rename all .log → .txt in current dir',
-        code:  `for f in *.log; do mv "$f" "${f%.log}.txt"; done`,
+        code:  `for f in *.log; do mv "$f" "\${f%.log}.txt"; done`,
       },
       {
         label: 'Copy directory recursively',
