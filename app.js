@@ -221,6 +221,10 @@ $('btn-sql-copy').addEventListener('click', () => copyText($('sql-output').value
 function buildLibrary(filter = '') {
   const body = $('library-body');
   body.innerHTML = '';
+  if (typeof LIBRARY === 'undefined' || !LIBRARY.length) {
+    body.innerHTML = '<p style="color:#55555f;font-size:.82rem;padding:1rem">No library entries found.</p>';
+    return;
+  }
   const q = filter.toLowerCase();
 
   LIBRARY.forEach(section => {

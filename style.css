@@ -121,6 +121,7 @@ nav { display: flex; flex-direction: column; gap: 3px; }
   overflow: hidden;
 }
 .page-cols.single { overflow-y: auto; }
+.page-cols.single .col { overflow-y: auto; padding-bottom: 2rem; }
 
 .col {
   display: flex;
