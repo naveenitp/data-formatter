@@ -498,3 +498,33 @@ buildLibrary = function(filter) {
 
 // Init widget
 buildWidget();
+
+// ── Clock ─────────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  $('clock-time').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  $('clock-date').textContent = `${days[now.getDay()]}, ${pad(now.getDate())} ${months[now.getMonth()]} ${now.getFullYear()}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ── Theme toggle ──────────────────────────────────────────────────────────────
+const THEME_KEY = 'datafmt_theme';
+let isNeuo = localStorage.getItem(THEME_KEY) === 'neuo';
+
+function applyTheme() {
+  document.body.classList.toggle('neuo', isNeuo);
+  $('toggle-pill').classList.toggle('on', isNeuo);
+  $('theme-label').textContent = isNeuo ? 'Neumorphic' : 'Normal';
+}
+
+applyTheme();
+
+$('theme-toggle').addEventListener('click', () => {
+  isNeuo = !isNeuo;
+  localStorage.setItem(THEME_KEY, isNeuo ? 'neuo' : 'normal');
+  applyTheme();
+});

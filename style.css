@@ -584,3 +584,185 @@ textarea[readonly] { background: #0d0d0f; color: #a0a0b0; cursor: default; resiz
 }
 .ws-item:hover .ws-load-btn { opacity: 1; }
 .ws-load-btn:hover { border-color: var(--border-hi); color: var(--text); background: var(--bg-hov); }
+
+/* ── Clock ── */
+.sidebar-clock {
+  margin: 0 0.5rem 1.25rem;
+  padding: 0.75rem 0.85rem;
+  background: var(--bg-inp);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  text-align: center;
+}
+.clock-time {
+  font-family: var(--mono);
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+.clock-date {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--text3);
+  margin-top: 4px;
+  letter-spacing: 0.03em;
+}
+
+/* ── Theme toggle ── */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--rsm);
+  color: var(--text2);
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.13s;
+  margin-bottom: 6px;
+}
+.theme-toggle:hover { border-color: var(--border-hi); color: var(--text); }
+.theme-toggle span { flex: 1; text-align: left; }
+
+.toggle-pill {
+  width: 28px; height: 15px;
+  background: var(--border-hi);
+  border-radius: 10px;
+  position: relative;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.toggle-pill.on { background: var(--accent); }
+.toggle-knob {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 11px; height: 11px;
+  background: var(--text);
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+.toggle-pill.on .toggle-knob { transform: translateX(13px); }
+
+/* ══════════════════════════════════════════
+   NEUMORPHIC THEME — applied via body.neuo
+   ══════════════════════════════════════════ */
+
+body.neuo {
+  --bg:         #1a1a2e;
+  --bg-card:    #1e1e32;
+  --bg-inp:     #16162a;
+  --bg-hov:     #22223a;
+  --sb-bg:      #15152a;
+  --border:     #2a2a4a;
+  --border-hi:  #3a3a5e;
+  --accent:     #9d7ff5;
+  --accent-dim: rgba(157,127,245,0.15);
+  --accent-hi:  #b59af7;
+  --text:       #e8e8f8;
+  --text2:      #8888aa;
+  --text3:      #55556a;
+}
+
+/* Neumorphic card shadows */
+body.neuo .card,
+body.neuo .lib-section > .lib-hdr,
+body.neuo .ws-section > .ws-hdr {
+  border-color: transparent !important;
+}
+
+body.neuo .card:not(.collapsible),
+body.neuo .card.collapsible {
+  box-shadow:
+    4px 4px 10px rgba(0,0,0,0.45),
+    -3px -3px 8px rgba(255,255,255,0.03);
+}
+
+/* Neumorphic buttons */
+body.neuo .btn,
+body.neuo .pill,
+body.neuo .ql-btn,
+body.neuo .nav-item {
+  border-color: transparent !important;
+  box-shadow:
+    3px 3px 7px rgba(0,0,0,0.4),
+    -2px -2px 5px rgba(255,255,255,0.04);
+  transition: box-shadow 0.15s, background 0.15s, transform 0.1s;
+}
+
+body.neuo .btn:hover,
+body.neuo .pill:hover,
+body.neuo .ql-btn:hover {
+  box-shadow:
+    1px 1px 4px rgba(0,0,0,0.5),
+    -1px -1px 3px rgba(255,255,255,0.03);
+  transform: translateY(1px);
+}
+
+body.neuo .btn:active,
+body.neuo .pill.active,
+body.neuo .ql-btn:active {
+  box-shadow:
+    inset 3px 3px 7px rgba(0,0,0,0.5),
+    inset -2px -2px 5px rgba(255,255,255,0.03);
+  transform: translateY(0);
+}
+
+body.neuo .pill.active {
+  background: var(--accent-dim) !important;
+  color: var(--accent-hi) !important;
+  box-shadow:
+    inset 3px 3px 7px rgba(0,0,0,0.4),
+    inset -2px -2px 5px rgba(255,255,255,0.03) !important;
+}
+
+body.neuo .nav-item.active {
+  background: var(--accent-dim) !important;
+  color: var(--accent-hi) !important;
+  box-shadow:
+    inset 2px 2px 6px rgba(0,0,0,0.4),
+    inset -2px -2px 4px rgba(255,255,255,0.03) !important;
+}
+
+body.neuo .btn.btn-primary {
+  box-shadow:
+    3px 3px 7px rgba(0,0,0,0.4),
+    -2px -2px 5px rgba(157,127,245,0.08) !important;
+}
+
+body.neuo textarea {
+  box-shadow: inset 3px 3px 8px rgba(0,0,0,0.4), inset -2px -2px 5px rgba(255,255,255,0.02);
+  border-color: transparent !important;
+}
+body.neuo textarea:focus {
+  box-shadow: inset 3px 3px 8px rgba(0,0,0,0.4), inset -2px -2px 5px rgba(255,255,255,0.02), 0 0 0 1px var(--accent) !important;
+}
+
+body.neuo .sidebar-clock {
+  box-shadow:
+    inset 3px 3px 7px rgba(0,0,0,0.45),
+    inset -2px -2px 5px rgba(255,255,255,0.03);
+  border-color: transparent;
+}
+
+body.neuo #sidebar {
+  box-shadow: 4px 0 20px rgba(0,0,0,0.4);
+}
+
+body.neuo .lib-item:hover,
+body.neuo .ws-item:hover {
+  box-shadow: inset 2px 2px 6px rgba(0,0,0,0.3);
+}
+
+body.neuo .ws-copy-btn {
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.4), -1px -1px 3px rgba(255,255,255,0.04);
+  border-color: transparent;
+}
+body.neuo .ws-copy-btn:hover {
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.5), inset 1px 1px 3px rgba(0,0,0,0.3);
+}
