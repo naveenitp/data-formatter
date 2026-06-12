@@ -529,6 +529,170 @@ $('theme-toggle').addEventListener('click', () => {
   applyTheme();
 });
 
+// ── Clock ─────────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  $('clock-time').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  $('clock-date').textContent = `${days[now.getDay()]}, ${pad(now.getDate())} ${months[now.getMonth()]} ${now.getFullYear()}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ── Theme toggle ──────────────────────────────────────────────────────────────
+const THEME_KEY = 'datafmt_theme';
+let isNeuo = localStorage.getItem(THEME_KEY) === 'glass';
+
+function applyTheme() {
+  document.body.classList.toggle('glass', isNeuo);
+  $('toggle-pill').classList.toggle('on', isNeuo);
+  $('theme-label').textContent = isNeuo ? 'Glass' : 'Normal';
+}
+
+applyTheme();
+
+$('theme-toggle').addEventListener('click', () => {
+  isNeuo = !isNeuo;
+  localStorage.setItem(THEME_KEY, isNeuo ? 'glass' : 'normal');
+  applyTheme();
+});
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+function updateDashboard() {
+  const raw = $('sql-input') ? $('sql-input').value : '';
+  const allLines = raw.split(/[\n,]+/).map(x => x.trim());
+  const emptyCount = allLines.filter(x => x === '').length;
+  const items = allLines.filter(x => x !== '');
+  const total = items.length;
+  const unique = [...new Set(items)];
+  const dupeCount = total - unique.length;
+  const numericCount = items.filter(x => !isNaN(Number(x)) && x !== '').length;
+
+  // Stat cards
+  $('ds-total').textContent   = total;
+  $('ds-unique').textContent  = unique.length;
+  $('ds-dupes').textContent   = dupeCount;
+  $('ds-numeric').textContent = numericCount;
+  $('ds-empty').textContent   = emptyCount;
+
+  if (total === 0) {
+    // Empty state
+    $('ds-length-chart').innerHTML = '<div class="dash-empty"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg><p>Paste data in SQL input to see analytics</p></div>';
+    $('ds-freq-tbody').innerHTML = '';
+    $('ds-values-wrap').innerHTML = '<div class="dash-empty"><p>No data yet</p></div>';
+    return;
+  }
+
+  // Length distribution
+  const lenGroups = {};
+  items.forEach(v => {
+    const l = v.length;
+    lenGroups[l] = (lenGroups[l] || 0) + 1;
+  });
+  const maxLenCount = Math.max(...Object.values(lenGroups));
+  const sortedLens = Object.entries(lenGroups).sort((a,b) => Number(a[0]) - Number(b[0]));
+  $('ds-length-chart').innerHTML = sortedLens.map(([len, count]) => `
+    <div class="dash-bar-row">
+      <span class="dash-bar-lbl">${len} char${len==1?'':'s'}</span>
+      <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${Math.round(count/maxLenCount*100)}%"></div></div>
+      <span class="dash-bar-count">${count}</span>
+    </div>`).join('');
+
+  // Frequency table
+  const freq = {};
+  items.forEach(v => { freq[v] = (freq[v] || 0) + 1; });
+  const sorted = Object.entries(freq).sort((a,b) => b[1] - a[1]);
+  const maxFreq = sorted[0]?.[1] || 1;
+  $('ds-freq-tbody').innerHTML = sorted.map(([val, count], i) => `
+    <tr>
+      <td style="color:var(--text3)">${i+1}</td>
+      <td>${esc(val)}</td>
+      <td>${count}</td>
+      <td>${((count/total)*100).toFixed(1)}%</td>
+      <td><div class="dash-freq-mini-bar" style="width:${Math.max(4,Math.round(count/maxFreq*120))}px"></div></td>
+    </tr>`).join('');
+
+  // Value chips
+  const seen = {};
+  items.forEach(v => { seen[v] = (seen[v]||0)+1; });
+  $('ds-values-wrap').innerHTML = items.map(v =>
+    `<span class="dash-chip${seen[v]>1?' dup':''}" title="${esc(v)}">${esc(v)}</span>`
+  ).join('');
+
+  // Click chip = copy
+  $('ds-values-wrap').querySelectorAll('.dash-chip').forEach(chip =>
+    chip.addEventListener('click', () => copyText(chip.title || chip.textContent))
+  );
+}
+
+// Wire sql-input to also update dashboard
+const sqlInputEl = $('sql-input');
+if (sqlInputEl) {
+  sqlInputEl.addEventListener('input', updateDashboard);
+}
+
+// Export Excel (CSV download — opens perfectly in Excel)
+$('btn-export-excel').addEventListener('click', () => {
+  const raw = $('sql-input') ? $('sql-input').value : '';
+  const items = raw.split(/[\n,]+/).map(x => x.trim()).filter(x => x !== '');
+  if (!items.length) return;
+
+  const freq = {};
+  items.forEach(v => { freq[v] = (freq[v] || 0) + 1; });
+  const total = items.length;
+  const rows = [
+    ['#', 'Value', 'Count', '% of Total', 'Is Duplicate'],
+    ...Object.entries(freq)
+      .sort((a,b) => b[1]-a[1])
+      .map(([val, count], i) => [
+        i+1, val, count,
+        ((count/total)*100).toFixed(2)+'%',
+        count > 1 ? 'Yes' : 'No'
+      ])
+  ];
+
+  // Summary sheet header rows
+  const summary = [
+    ['DataFmt — Dashboard Export'],
+    ['Generated', new Date().toLocaleString()],
+    [''],
+    ['SUMMARY'],
+    ['Total items', items.length],
+    ['Unique values', Object.keys(freq).length],
+    ['Duplicates', items.length - Object.keys(freq).length],
+    ['Numeric items', items.filter(x => !isNaN(Number(x)) && x !== '').length],
+    [''],
+    ['FREQUENCY TABLE'],
+    ...rows
+  ];
+
+  const csv = summary.map(r => r.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const bom = '\uFEFF'; // UTF-8 BOM for Excel
+  const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), {
+    href: url,
+    download: `datafmt-dashboard-${new Date().toISOString().slice(0,10)}.csv`
+  });
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast();
+  $('toast').textContent = 'Excel file downloaded!';
+  setTimeout(() => { $('toast').textContent = 'Copied!'; }, 2000);
+});
+
+// Trigger initial dashboard render
+updateDashboard();
+
+// Also update dashboard when switching to it
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.page === 'dashboard') updateDashboard();
+  });
+});
+
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 let dashDelim = 'auto';
 let dashHasHeader = true;
