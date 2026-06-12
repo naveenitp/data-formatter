@@ -32,11 +32,15 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
         <span>Library</span>
       </button>
+      <button class="nav-item" data-page="dashboard">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>Dashboard</span>
+      </button>
     </nav>
     <div class="sidebar-footer">
       <button class="theme-toggle" id="theme-toggle" title="Toggle neumorphic style">
         <svg id="theme-icon-normal" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        <span id="theme-label">Neumorphic</span>
+        <span id="theme-label">Glass</span>
         <div class="toggle-pill" id="toggle-pill"><div class="toggle-knob"></div></div>
       </button>
       <a href="https://github.com/" target="_blank" rel="noopener">
@@ -208,6 +212,97 @@
             <div id="widget-body" class="lib-widget-body"></div>
           </div>
         </div>
+
+      </div>
+    </main>
+
+    <!-- ══ Page: Dashboard ══ -->
+    <main class="page" id="page-dashboard">
+      <div class="page-header">
+        <h1>Dashboard</h1>
+        <p>Live analytics from your SQL input data — paste values to see counts and breakdown.</p>
+      </div>
+      <div class="page-body one-col" id="dashboard-body">
+
+        <!-- Stats row -->
+        <div class="dash-stats-row">
+          <div class="dash-stat-card">
+            <div class="dash-stat-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </div>
+            <div class="dash-stat-info">
+              <div class="dash-stat-val" id="ds-total">0</div>
+              <div class="dash-stat-label">Total items</div>
+            </div>
+          </div>
+          <div class="dash-stat-card">
+            <div class="dash-stat-icon accent-green">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <div class="dash-stat-info">
+              <div class="dash-stat-val" id="ds-unique">0</div>
+              <div class="dash-stat-label">Unique values</div>
+            </div>
+          </div>
+          <div class="dash-stat-card">
+            <div class="dash-stat-icon accent-orange">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <div class="dash-stat-info">
+              <div class="dash-stat-val" id="ds-dupes">0</div>
+              <div class="dash-stat-label">Duplicates</div>
+            </div>
+          </div>
+          <div class="dash-stat-card">
+            <div class="dash-stat-icon accent-blue">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            </div>
+            <div class="dash-stat-info">
+              <div class="dash-stat-val" id="ds-numeric">0</div>
+              <div class="dash-stat-label">Numeric</div>
+            </div>
+          </div>
+          <div class="dash-stat-card">
+            <div class="dash-stat-icon accent-pink">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/></svg>
+            </div>
+            <div class="dash-stat-info">
+              <div class="dash-stat-val" id="ds-empty">0</div>
+              <div class="dash-stat-label">Empty lines</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Length distribution bar chart -->
+        <section class="card dash-card">
+          <div class="card-label">Length distribution</div>
+          <div class="dash-bar-chart" id="ds-length-chart"></div>
+        </section>
+
+        <!-- Frequency table + export -->
+        <section class="card dash-card">
+          <div class="card-row" style="margin-bottom:10px">
+            <div class="card-label">Value frequency</div>
+            <div class="btns">
+              <button class="btn btn-primary" id="btn-export-excel">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                Export Excel
+              </button>
+            </div>
+          </div>
+          <div class="dash-freq-table-wrap">
+            <table class="dash-freq-table" id="ds-freq-table">
+              <thead><tr><th>#</th><th>Value</th><th>Count</th><th>% of total</th><th>Bar</th></tr></thead>
+              <tbody id="ds-freq-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Value preview -->
+        <section class="card dash-card">
+          <div class="card-label" style="margin-bottom:8px">All values</div>
+          <div class="dash-values-wrap" id="ds-values-wrap"></div>
+        </section>
 
       </div>
     </main>
