@@ -213,11 +213,12 @@ textarea[readonly] { background: #0d0d0f; color: #a0a0b0; cursor: default; resiz
 .custom-inp.show { display: block; }
 
 /* ── Addon grid ── */
-.addon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 7px; }
+.addon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 7px; align-items: start; }
 .addon-card {
   display: flex; flex-direction: column; gap: 5px; background: var(--bg-inp);
   border: 1px solid var(--border); border-radius: var(--rsm);
   padding: 9px 11px; cursor: pointer; transition: border-color 0.13s; user-select: none;
+  height: auto; align-self: start;
 }
 .addon-card:hover { border-color: var(--border-hi); }
 .addon-card input[type="checkbox"] { display: none; }
@@ -225,7 +226,7 @@ textarea[readonly] { background: #0d0d0f; color: #a0a0b0; cursor: default; resiz
 .addon-info { display: flex; flex-direction: column; gap: 2px; pointer-events: none; }
 .addon-name { font-size: 0.78rem; font-weight: 500; color: var(--text); }
 .addon-desc { font-size: 0.7rem; color: var(--text3); }
-.sub-opts { display: none; gap: 5px; margin-top: 4px; flex-wrap: wrap; }
+.sub-opts { display: none; gap: 5px; margin-top: 6px; flex-wrap: wrap; width: 100%; }
 .sub-opts.show { display: flex; }
 .sub-inp {
   background: var(--bg-card); border: 1px solid var(--border-hi); border-radius: var(--rsm);

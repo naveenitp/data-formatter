@@ -109,6 +109,7 @@ document.querySelectorAll('#sep-opts .pill').forEach(el => el.addEventListener('
 $('custom-sep').addEventListener('input', format);
 $('input').addEventListener('input', format);
 $('btn-copy').addEventListener('click', () => copyText($('output').value));
+$('btn-clear-input').addEventListener('click', () => { $('input').value = ''; $('output').value = ''; $('stat').textContent = ''; $('input-meta').textContent = '0 items detected'; });
 $('btn-download').addEventListener('click', () => { const v = $('output').value; if (!v) return; Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([v], {type:'text/plain'})), download:'formatted-data.txt' }).click(); });
 $('btn-clear').addEventListener('click', () => { $('input').value = $('output').value = ''; $('stat').textContent = ''; $('input-meta').textContent = '0 items detected'; });
 document.querySelectorAll('.ql-btn').forEach(btn => btn.addEventListener('click', () => {
@@ -147,6 +148,7 @@ $('btn-sql-run').addEventListener('click', buildQuery);
 $('sql-template').addEventListener('input', buildQuery);
 $('sql-input').addEventListener('input', buildQuery);
 $('btn-sql-copy').addEventListener('click', () => copyText($('sql-output').value));
+$('btn-clear-sql-input').addEventListener('click', () => { $('sql-input').value = ''; $('sql-output').value = ''; $('sql-stat').textContent = ''; $('sql-input-meta').textContent = '0 items detected'; });
 
 // ── Library ───────────────────────────────────────────────────────────────────
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
