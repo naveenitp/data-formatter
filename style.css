@@ -113,8 +113,9 @@ nav { display: flex; flex-direction: column; gap: 3px; }
   gap: 10px;
 }
 .page-body.two-col .col:first-child {
-  flex: 0 0 45%;
+  flex: 0 0 46%;
   border-right: 1px solid var(--border);
+  overflow-y: auto;
 }
 
 /* one-col: library page — single scrollable column */
@@ -129,7 +130,6 @@ nav { display: flex; flex-direction: column; gap: 3px; }
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--r);
-  overflow: hidden;
 }
 /* plain card padding */
 .card:not(.collapsible) { padding: 1rem 1.25rem; }
@@ -341,3 +341,62 @@ textarea[readonly] { background: #0d0d0f; color: #a0a0b0; cursor: default; resiz
   .nav-item span, .sidebar-footer a span { display: none; }
   .nav-item { justify-content: center; padding: 9px; }
 }
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 300; backdrop-filter: blur(3px);
+}
+.modal-overlay.hidden { display: none; }
+
+.modal {
+  background: var(--bg-card); border: 1px solid var(--border-hi);
+  border-radius: var(--r); width: 480px; max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 4rem); display: flex; flex-direction: column;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 1.25rem 0.75rem; border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.modal-title { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+.modal-close {
+  background: transparent; border: none; color: var(--text3);
+  cursor: pointer; padding: 3px; border-radius: 4px; transition: color 0.13s;
+  display: flex; align-items: center;
+}
+.modal-close:hover { color: var(--text); }
+
+.modal-body { padding: 1rem 1.25rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 12px; }
+.modal-footer {
+  padding: 0.75rem 1.25rem; border-top: 1px solid var(--border);
+  display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0;
+}
+
+.mfield { display: flex; flex-direction: column; gap: 5px; }
+.mlabel { font-size: 0.72rem; font-family: var(--mono); color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; }
+.mreq { color: var(--accent-hi); }
+.mopt { color: var(--text3); font-size: 0.68rem; }
+.minput {
+  background: var(--bg-inp); border: 1px solid var(--border); border-radius: var(--rsm);
+  color: var(--text); font-family: var(--sans); font-size: 0.82rem;
+  padding: 7px 10px; outline: none; width: 100%; transition: border-color 0.13s;
+  resize: vertical;
+}
+.minput:focus { border-color: var(--accent); }
+.m-error { font-size: 0.78rem; color: #f07070; padding: 6px 10px; background: rgba(220,60,60,0.1); border-radius: var(--rsm); border: 1px solid rgba(220,60,60,0.25); }
+.m-error.hidden { display: none; }
+
+/* custom lib section badge */
+.badge-custom { background: #2a1a3a; color: #c084f5; }
+
+/* Delete button in custom lib items */
+.lib-del-btn {
+  background: transparent; border: 1px solid transparent; border-radius: var(--rsm);
+  color: var(--text3); cursor: pointer; padding: 3px 4px; opacity: 0;
+  transition: all 0.13s; display: flex; align-items: center;
+}
+.lib-item:hover .lib-del-btn { opacity: 1; }
+.lib-del-btn:hover { border-color: #5a2020; color: #f07070; background: rgba(220,60,60,0.1); }

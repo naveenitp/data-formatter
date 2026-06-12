@@ -207,9 +207,177 @@ function showToast() {
 // ── Init ──────────────────────────────────────────────────────────────────────
 buildAddonGrid();
 buildSqlSaved();
-buildLibrary();
 
 $('input').value = '1254251\n1254152\n2542541';
 $('sql-input').value = '1254251\n1254152\n2542541';
 format();
 if (SQL_TEMPLATES && SQL_TEMPLATES.length) { $('sql-template').value = SQL_TEMPLATES[0].query; buildQuery(); }
+
+// ── Custom Library (localStorage) ────────────────────────────────────────────
+const STORAGE_KEY = 'datafmt_custom_entries';
+
+function loadCustomEntries() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function saveCustomEntries(entries) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+}
+
+function deleteCustomEntry(id) {
+  const entries = loadCustomEntries().filter(e => e.id !== id);
+  saveCustomEntries(entries);
+  buildLibrary($('lib-search').value);
+}
+
+// Rebuild library, prepending custom entries as their own section
+const _origBuildLibrary = buildLibrary;
+buildLibrary = function(filter) {
+  const body = $('library-body');
+  body.innerHTML = '';
+  filter = (filter || '').toLowerCase().trim();
+
+  const custom = loadCustomEntries();
+
+  // Build custom section first
+  const customItems = filter
+    ? custom.filter(it => it.label.toLowerCase().includes(filter) || (it.desc||'').toLowerCase().includes(filter) || it.code.toLowerCase().includes(filter))
+    : custom;
+
+  if (customItems.length > 0 || (!filter && custom.length === 0)) {
+    const sec = document.createElement('div');
+    sec.className = 'lib-section open';
+
+    const hdr = document.createElement('button');
+    hdr.className = 'lib-hdr';
+    hdr.innerHTML = `<span class="lib-badge badge-custom">custom</span><span class="lib-title">My entries</span><span class="lib-count">${customItems.length}</span><svg class="lib-chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+    hdr.addEventListener('click', () => sec.classList.toggle('open'));
+
+    const bdy = document.createElement('div');
+    bdy.className = 'lib-body';
+
+    if (customItems.length === 0 && !filter) {
+      bdy.innerHTML = '<div style="padding:12px 1rem;font-size:0.78rem;color:var(--text3)">No custom entries yet — click <strong style="color:var(--text2)">+ Add entry</strong> to save your first snippet.</div>';
+    } else {
+      customItems.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'lib-item';
+        row.innerHTML = `
+          <div class="lib-item-info">
+            <div class="lib-item-lbl" style="display:flex;align-items:center;gap:8px">
+              ${esc(item.label)}
+              <span class="lib-badge badge-${item.category||'custom'}" style="font-size:0.55rem">${item.category||'custom'}</span>
+            </div>
+            ${item.desc ? `<div class="lib-item-desc">${esc(item.desc)}</div>` : ''}
+            <pre class="lib-item-code">${esc(item.code)}</pre>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+            <svg class="lib-copy-ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <button class="lib-del-btn" data-id="${item.id}" title="Delete entry">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+            </button>
+          </div>`;
+        row.querySelector('.lib-copy-ic').addEventListener('click', e => { e.stopPropagation(); copyText(item.code); row.classList.add('flash'); setTimeout(() => row.classList.remove('flash'), 1000); });
+        row.querySelector('.lib-del-btn').addEventListener('click', e => { e.stopPropagation(); if (confirm('Delete "' + item.label + '"?')) deleteCustomEntry(item.id); });
+        // click row = copy
+        row.addEventListener('click', () => { copyText(item.code); row.classList.add('flash'); setTimeout(() => row.classList.remove('flash'), 1000); });
+        bdy.appendChild(row);
+      });
+    }
+
+    sec.appendChild(hdr); sec.appendChild(bdy); body.appendChild(sec);
+  }
+
+  // Now render built-in sections
+  LIBRARY.forEach(section => {
+    const items = filter
+      ? section.items.filter(it => it.label.toLowerCase().includes(filter) || (it.desc||'').toLowerCase().includes(filter) || it.code.toLowerCase().includes(filter))
+      : section.items;
+    if (filter && !items.length) return;
+
+    const sec = document.createElement('div');
+    sec.className = 'lib-section' + ((section.open || filter) ? ' open' : '');
+
+    const hdr = document.createElement('button');
+    hdr.className = 'lib-hdr';
+    hdr.innerHTML = `<span class="lib-badge badge-${section.icon}">${section.icon}</span><span class="lib-title">${section.title}</span><span class="lib-count">${items.length}</span><svg class="lib-chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+    hdr.addEventListener('click', () => sec.classList.toggle('open'));
+
+    const bdy = document.createElement('div');
+    bdy.className = 'lib-body';
+    items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'lib-item';
+      row.innerHTML = `<div class="lib-item-info"><div class="lib-item-lbl">${esc(item.label)}</div>${item.desc?`<div class="lib-item-desc">${esc(item.desc)}</div>`:''}<pre class="lib-item-code">${esc(item.code)}</pre></div><svg class="lib-copy-ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+      row.addEventListener('click', () => { copyText(item.code); row.classList.add('flash'); setTimeout(() => row.classList.remove('flash'), 1000); });
+      bdy.appendChild(row);
+    });
+    sec.appendChild(hdr); sec.appendChild(bdy); body.appendChild(sec);
+  });
+};
+
+// ── Modal wiring ──────────────────────────────────────────────────────────────
+let modalCategoryVal = 'custom';
+
+function openModal(prefillCode) {
+  $('m-label').value = '';
+  $('m-desc').value = '';
+  $('m-code').value = prefillCode || '';
+  $('m-error').classList.add('hidden');
+  modalCategoryVal = 'custom';
+  document.querySelectorAll('#m-category-pills .pill').forEach(p => p.classList.toggle('active', p.dataset.val === 'custom'));
+  $('modal-overlay').classList.remove('hidden');
+  setTimeout(() => $('m-label').focus(), 50);
+}
+
+function closeModal() { $('modal-overlay').classList.add('hidden'); }
+
+document.querySelectorAll('#m-category-pills .pill').forEach(p =>
+  p.addEventListener('click', () => {
+    document.querySelectorAll('#m-category-pills .pill').forEach(x => x.classList.remove('active'));
+    p.classList.add('active');
+    modalCategoryVal = p.dataset.val;
+  })
+);
+
+$('btn-lib-add').addEventListener('click', () => openModal());
+$('btn-modal-close').addEventListener('click', closeModal);
+$('btn-modal-cancel').addEventListener('click', closeModal);
+$('modal-overlay').addEventListener('click', e => { if (e.target === $('modal-overlay')) closeModal(); });
+
+$('btn-modal-save').addEventListener('click', () => {
+  const label = $('m-label').value.trim();
+  const code  = $('m-code').value.trim();
+  if (!label || !code) { $('m-error').classList.remove('hidden'); return; }
+  $('m-error').classList.add('hidden');
+
+  const entry = {
+    id: 'custom_' + Date.now(),
+    label,
+    desc: $('m-desc').value.trim(),
+    code,
+    category: modalCategoryVal,
+  };
+
+  const entries = loadCustomEntries();
+  entries.unshift(entry);
+  saveCustomEntries(entries);
+  closeModal();
+
+  // Switch to library page and rebuild
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelector('[data-page="library"]').classList.add('active');
+  $('page-library').classList.add('active');
+  buildLibrary();
+  showToast();
+  $('toast').textContent = 'Entry saved!';
+  setTimeout(() => { $('toast').textContent = 'Copied!'; }, 1800);
+});
+
+// Keyboard: Escape closes modal
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// Re-init library with custom entries
+buildLibrary();

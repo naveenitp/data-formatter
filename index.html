@@ -197,6 +197,9 @@
         <div class="lib-toolbar">
           <input type="text" id="lib-search" class="lib-search" placeholder="Search snippets…" />
           <div class="btns">
+            <button class="btn btn-primary" id="btn-lib-add">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add entry
+            </button>
             <button class="btn" id="btn-lib-expand">Expand all</button>
             <button class="btn" id="btn-lib-collapse">Collapse all</button>
           </div>
@@ -208,6 +211,50 @@
   </div>
 
   <div id="toast">Copied!</div>
+
+  <!-- Add to Library modal -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">Add library entry</span>
+        <button class="modal-close" id="btn-modal-close">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="mfield">
+          <label class="mlabel">Label <span class="mreq">*</span></label>
+          <input type="text" id="m-label" class="minput" placeholder="e.g. Get active connections" />
+        </div>
+        <div class="mfield">
+          <label class="mlabel">Category</label>
+          <div class="pills" id="m-category-pills" style="margin-top:6px">
+            <button class="pill active" data-val="custom">Custom</button>
+            <button class="pill" data-val="sql">SQL</button>
+            <button class="pill" data-val="linux">Linux</button>
+            <button class="pill" data-val="git">Git</button>
+            <button class="pill" data-val="docker">Docker</button>
+          </div>
+        </div>
+        <div class="mfield">
+          <label class="mlabel">Description <span class="mopt">(optional)</span></label>
+          <input type="text" id="m-desc" class="minput" placeholder="Short description" />
+        </div>
+        <div class="mfield">
+          <label class="mlabel">Code / Query <span class="mreq">*</span></label>
+          <textarea id="m-code" class="minput" style="min-height:90px;font-family:var(--mono);font-size:0.8rem" placeholder="SELECT * FROM ..."></textarea>
+        </div>
+        <div id="m-error" class="m-error hidden">Label and Code are required.</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="btn-modal-cancel">Cancel</button>
+        <button class="btn btn-primary" id="btn-modal-save">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save entry
+        </button>
+      </div>
+    </div>
+  </div>
 
   <script src="config.js"></script>
   <script src="app.js"></script>
