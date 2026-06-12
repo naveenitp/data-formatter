@@ -400,3 +400,187 @@ textarea[readonly] { background: #0d0d0f; color: #a0a0b0; cursor: default; resiz
 }
 .lib-item:hover .lib-del-btn { opacity: 1; }
 .lib-del-btn:hover { border-color: #5a2020; color: #f07070; background: rgba(220,60,60,0.1); }
+
+/* ── Three-col layout (SQL page with widget) ── */
+.page-body.three-col {
+  flex-direction: row;
+}
+.page-body.three-col .col {
+  overflow-y: auto;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.page-body.three-col .col:first-child {
+  flex: 0 0 38%;
+  border-right: 1px solid var(--border);
+}
+.page-body.three-col .col:nth-child(2) {
+  flex: 0 0 34%;
+  border-right: 1px solid var(--border);
+}
+.col-lib-widget {
+  flex: 1;
+  padding: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* ── Library widget ── */
+.lib-widget {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.lib-widget-header {
+  padding: 0.85rem 1rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  background: var(--sb-bg);
+}
+
+.lib-widget-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.7rem;
+  font-family: var(--mono);
+  color: var(--text3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.lib-widget-title svg { opacity: 0.5; flex-shrink: 0; }
+
+.widget-search {
+  width: 100%;
+  background: var(--bg-inp);
+  border: 1px solid var(--border);
+  border-radius: var(--rsm);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  padding: 5px 9px;
+  outline: none;
+  transition: border-color 0.13s;
+}
+.widget-search:focus { border-color: var(--accent); }
+.widget-search::placeholder { color: var(--text3); }
+
+.lib-widget-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* Widget section */
+.ws-section { border-bottom: 1px solid var(--border); }
+.ws-section:last-child { border-bottom: none; }
+
+.ws-hdr {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 1rem;
+  cursor: pointer;
+  user-select: none;
+  background: transparent;
+  border: none;
+  width: 100%;
+  transition: background 0.13s;
+}
+.ws-hdr:hover { background: var(--bg-hov); }
+
+.ws-hdr-badge {
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  font-weight: 500;
+  padding: 2px 5px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+.ws-title { font-size: 0.78rem; color: var(--text2); flex: 1; text-align: left; font-weight: 500; }
+.ws-count { font-family: var(--mono); font-size: 0.62rem; color: var(--text3); }
+.ws-chev  { transition: transform 0.18s; opacity: 0.35; flex-shrink: 0; }
+.ws-section.open .ws-chev { transform: rotate(180deg); }
+
+.ws-items { display: none; }
+.ws-section.open .ws-items { display: block; }
+
+/* Widget item */
+.ws-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 1rem 7px 1.25rem;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.13s;
+}
+.ws-item:hover { background: var(--bg-hov); }
+.ws-item:hover .ws-copy-btn { opacity: 1; }
+.ws-item.flash { background: var(--accent-dim); }
+
+.ws-item-info { flex: 1; min-width: 0; }
+.ws-item-label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ws-item-preview {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--text3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+
+.ws-copy-btn {
+  flex-shrink: 0;
+  opacity: 0;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  border-radius: var(--rsm);
+  color: var(--accent-hi);
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  font-family: var(--mono);
+  transition: all 0.13s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.ws-copy-btn:hover { background: rgba(124,106,247,0.25); }
+
+/* Also load into query button */
+.ws-load-btn {
+  flex-shrink: 0;
+  opacity: 0;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--rsm);
+  color: var(--text2);
+  cursor: pointer;
+  padding: 4px 7px;
+  font-size: 0.7rem;
+  transition: all 0.13s;
+  display: flex;
+  align-items: center;
+}
+.ws-item:hover .ws-load-btn { opacity: 1; }
+.ws-load-btn:hover { border-color: var(--border-hi); color: var(--text); background: var(--bg-hov); }

@@ -381,3 +381,120 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal()
 
 // Re-init library with custom entries
 buildLibrary();
+
+// ── Library Widget (SQL page sidebar) ─────────────────────────────────────────
+function buildWidget(filter) {
+  const body = $('widget-body');
+  if (!body) return;
+  body.innerHTML = '';
+  filter = (filter || '').toLowerCase().trim();
+
+  // Gather all entries: custom first, then built-in
+  const customEntries = loadCustomEntries();
+  const allSections = [];
+
+  if (customEntries.length) {
+    allSections.push({
+      icon: 'custom', title: 'My entries',
+      items: customEntries.map(e => ({ label: e.label, desc: e.desc, code: e.code, isQuery: e.category === 'sql' }))
+    });
+  }
+
+  LIBRARY.forEach(s => allSections.push({
+    icon: s.icon, title: s.title,
+    items: s.items.map(it => ({ label: it.label, desc: it.desc || '', code: it.code, isQuery: s.icon === 'sql' }))
+  }));
+
+  allSections.forEach((section, si) => {
+    const items = filter
+      ? section.items.filter(it => it.label.toLowerCase().includes(filter) || it.code.toLowerCase().includes(filter) || (it.desc||'').toLowerCase().includes(filter))
+      : section.items;
+    if (!items.length) return;
+
+    const sec = document.createElement('div');
+    sec.className = 'ws-section' + (si === 0 ? ' open' : '');
+
+    const hdr = document.createElement('button');
+    hdr.className = 'ws-hdr';
+    hdr.innerHTML = `
+      <span class="ws-hdr-badge badge-${section.icon}">${section.icon}</span>
+      <span class="ws-title">${section.title}</span>
+      <span class="ws-count">${items.length}</span>
+      <svg class="ws-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+    hdr.addEventListener('click', () => sec.classList.toggle('open'));
+
+    const itemsEl = document.createElement('div');
+    itemsEl.className = 'ws-items';
+
+    items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'ws-item';
+
+      // Preview: first non-empty line of code
+      const preview = item.code.split('\n').find(l => l.trim()) || item.code;
+
+      row.innerHTML = `
+        <div class="ws-item-info">
+          <div class="ws-item-label" title="${esc(item.label)}">${esc(item.label)}</div>
+          <div class="ws-item-preview" title="${esc(preview)}">${esc(preview)}</div>
+        </div>
+        ${item.isQuery ? `<button class="ws-load-btn" title="Load into template">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </button>` : ''}
+        <button class="ws-copy-btn">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy
+        </button>`;
+
+      // Copy button
+      row.querySelector('.ws-copy-btn').addEventListener('click', e => {
+        e.stopPropagation();
+        copyText(item.code);
+        row.classList.add('flash');
+        setTimeout(() => row.classList.remove('flash'), 900);
+      });
+
+      // Load into template button (SQL items only)
+      const loadBtn = row.querySelector('.ws-load-btn');
+      if (loadBtn) {
+        loadBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          $('sql-template').value = item.code;
+          buildQuery();
+          // brief highlight on template
+          $('sql-template').style.borderColor = 'var(--accent)';
+          setTimeout(() => $('sql-template').style.borderColor = '', 800);
+        });
+      }
+
+      // Click row = copy
+      row.addEventListener('click', () => {
+        copyText(item.code);
+        row.classList.add('flash');
+        setTimeout(() => row.classList.remove('flash'), 900);
+      });
+
+      itemsEl.appendChild(row);
+    });
+
+    sec.appendChild(hdr);
+    sec.appendChild(itemsEl);
+    body.appendChild(sec);
+  });
+
+  if (!body.children.length) {
+    body.innerHTML = '<div style="padding:1rem;font-size:0.78rem;color:var(--text3);text-align:center">No results</div>';
+  }
+}
+
+$('widget-search').addEventListener('input', e => buildWidget(e.target.value));
+
+// Re-run whenever library changes (new custom entry saved)
+const _prevBuildLibrary = buildLibrary;
+buildLibrary = function(filter) {
+  _prevBuildLibrary(filter);
+  buildWidget($('widget-search') ? $('widget-search').value : '');
+};
+
+// Init widget
+buildWidget();
