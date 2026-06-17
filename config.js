@@ -144,6 +144,17 @@ const ADDONS = [
     apply: null, // handled separately in app.js after join
   },
 
+  {
+    id: 'stripPipes',
+    name: 'Strip SQL pipes',
+    desc: 'Remove | characters from raw SQL CLI output',
+    default: false,
+    apply: (items) => items
+      .map(x => x.split('|').join(' '))
+      .map(x => x.trim())
+      .filter(x => x !== ''),
+  },
+
   // ── Add more addons below ─────────────────────────────────────────────────
   //
   // {

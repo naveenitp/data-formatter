@@ -59,7 +59,6 @@ document.querySelectorAll('.nav-item').forEach(btn =>
     btn.classList.add('active');
     const page = $('page-' + btn.dataset.page);
     if (page) page.classList.add('active');
-    if (btn.dataset.page === 'dashboard') updateDashboard();
     if (btn.dataset.page === 'library')   { buildLibrary(); buildWidget(); }
   })
 );
@@ -230,7 +229,14 @@ function buildQuery() {
   if (!tplEl||!outEl) return;
   const tpl = tplEl.value.trim();
   if (!tpl) { outEl.value=''; return; }
-  const items = parseItems($('sql-input')?.value||'').map(x=>x.trim()).filter(x=>x!=='');
+  const stripPipes = $('sql-strip-pipes')?.checked;
+  let items = parseItems($('sql-input')?.value||'').map(x=>x.trim()).filter(x=>x!=='');
+  if (stripPipes) {
+    items = items
+      .map(x => x.split('|').join(' '))
+      .map(x => x.trim())
+      .filter(x => x !== '');
+  }
   const inList = items.map(x => sqlQ==='single'?`'${x.replace(/'/g,"''")}'`:sqlQ==='double'?`"${x.replace(/"/g,'""')}"`:x).join(', ');
   outEl.value = tpl.replace(/\{\{IN\}\}/g, inList);
   if(statEl) statEl.textContent = items.length+' values injected';
@@ -246,6 +252,7 @@ document.querySelectorAll('#sql-quote-opts .pill').forEach(el =>
 on('btn-sql-run',       'click', buildQuery);
 on('sql-template',      'input', buildQuery);
 on('sql-input',         'input', buildQuery);
+on('sql-strip-pipes',   'change', buildQuery);
 on('btn-sql-copy',      'click', () => copyText($('sql-output')?.value));
 on('btn-clear-sql-input','click', () => {
   const i=$('sql-input'),o=$('sql-output'),s=$('sql-stat'),m=$('sql-input-meta');
@@ -392,164 +399,6 @@ function buildWidget(filter) {
   if(!body.children.length) body.innerHTML='<div style="padding:1rem;font-size:0.78rem;color:var(--text3);text-align:center">No results</div>';
 }
 on('widget-search','input',e=>buildWidget(e.target.value));
-
-// ── Dashboard ─────────────────────────────────────────────────────────────────
-let dashDelim='auto', dashHasHeader=true;
-let dashParsed={ headers:[], rows:[] };
-
-document.querySelectorAll('#dash-delim-opts .pill').forEach(el=>
-  el.addEventListener('click',()=>{
-    document.querySelectorAll('#dash-delim-opts .pill').forEach(p=>p.classList.remove('active'));
-    el.classList.add('active'); dashDelim=el.dataset.val; updateDashboard();
-  })
-);
-document.querySelectorAll('#dash-header-opts .pill').forEach(el=>
-  el.addEventListener('click',()=>{
-    document.querySelectorAll('#dash-header-opts .pill').forEach(p=>p.classList.remove('active'));
-    el.classList.add('active'); dashHasHeader=el.dataset.val==='yes'; updateDashboard();
-  })
-);
-
-function detectDelim(line){
-  const counts={',':(line.match(/,/g)||[]).length,'\t':(line.match(/\t/g)||[]).length,'|':(line.match(/\|/g)||[]).length,';':(line.match(/;/g)||[]).length};
-  const best=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
-  return best[1]>0?best[0]:null;
-}
-
-function parseDash(raw){
-  const lines=(raw||'').split('\n').map(l=>l.trimEnd()).filter(l=>l.trim()!=='');
-  if(!lines.length) return {headers:[],rows:[]};
-  const delim=dashDelim==='auto'?(detectDelim(lines[0])||null):(dashDelim==='\\t'?'\t':dashDelim);
-  let rows=delim?lines.map(l=>l.split(delim).map(c=>c.trim())):lines.map(l=>[l.trim()]);
-  const maxCols=Math.max(...rows.map(r=>r.length));
-  rows=rows.map(r=>{while(r.length<maxCols)r.push('');return r;});
-  let headers;
-  if(dashHasHeader&&rows.length>1){headers=rows[0];rows=rows.slice(1);}
-  else headers=Array.from({length:maxCols},(_,i)=>`Column ${i+1}`);
-  return {headers,rows};
-}
-
-function updateDashboard(){
-  const inputEl=$('dash-input'); if(!inputEl) return;
-  dashParsed=parseDash(inputEl.value);
-  const {headers,rows}=dashParsed, total=rows.length;
-  const meta=$('dash-input-meta');
-  if(meta) meta.textContent=total+' row'+(total!==1?'s':'')+' · '+headers.length+' col'+(headers.length!==1?'s':'')+' detected';
-  const setVal=(id,v)=>{const el=$(id);if(el)el.textContent=v;};
-  setVal('ds-total',total);
-  setVal('ds-cols',headers.length);
-  if(!total){setVal('ds-unique',0);setVal('ds-dupes',0);const pw=$('ds-preview-wrap');if(pw)pw.innerHTML='<div class="dash-empty">Paste data on the left to preview</div>';const cc=$('ds-col-breakdown-card');if(cc)cc.style.display='none';return;}
-  const rowStrs=rows.map(r=>r.join('|||'));
-  const uSize=new Set(rowStrs).size;
-  setVal('ds-unique',uSize);
-  setVal('ds-dupes',total-uSize);
-
-  // Preview table
-  const pw=$('ds-preview-wrap');
-  if(pw){
-    const preview=rows.slice(0,50);
-    pw.innerHTML=`<table class="dash-preview-table"><thead><tr><th class="row-num">#</th>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${preview.map((r,i)=>`<tr><td class="row-num">${i+1}</td>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>${rows.length>50?`<div class="dash-preview-more">Showing 50 of ${rows.length} rows</div>`:''}`;
-  }
-
-  // Column selector
-  const cc=$('ds-col-breakdown-card');
-  if(cc){
-    cc.style.display='';
-    const sel=$('ds-col-select');
-    if(sel){
-      const prev=sel.value;
-      sel.innerHTML=headers.map((h,i)=>`<option value="${i}">${esc(h)}</option>`).join('');
-      if(prev&&[...sel.options].some(o=>o.value===prev)) sel.value=prev;
-      renderColChart(parseInt(sel.value)||0);
-    }
-  }
-}
-
-function renderColChart(ci){
-  const {rows}=dashParsed; if(!rows.length) return;
-  const chart=$('ds-col-chart'); if(!chart) return;
-  const vals=rows.map(r=>r[ci]||'').filter(v=>v!=='');
-  const freq={}; vals.forEach(v=>{freq[v]=(freq[v]||0)+1;});
-  const sorted=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,20);
-  const maxF=sorted[0]?.[1]||1;
-  chart.innerHTML=sorted.map(([val,count])=>`<div class="dash-bar-row"><span class="dash-bar-lbl" title="${esc(val)}">${esc(val.length>10?val.slice(0,9)+'…':val)}</span><div class="dash-bar-track"><div class="dash-bar-fill" style="width:${Math.round(count/maxF*100)}%"></div></div><span class="dash-bar-count">${count}</span></div>`).join('');
-}
-
-on('ds-col-select','change',e=>renderColChart(parseInt(e.target.value)));
-on('dash-input','input',updateDashboard);
-on('btn-clear-dash','click',()=>{const i=$('dash-input');if(i){i.value='';updateDashboard();}});
-
-// ── Excel export ──────────────────────────────────────────────────────────────
-function xmlEsc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-
-function buildSheets(){
-  const {headers,rows}=dashParsed;
-  const title=$('dash-title')?.value||'Data Report';
-  const now=new Date().toLocaleString();
-  const rowStrs=rows.map(r=>r.join('|||'));
-  const dupeRows=rows.filter((_,i)=>rowStrs.indexOf(rowStrs[i])!==i);
-  const sheets=[];
-  if($('dx-summary')?.checked){
-    const s=[[title],['Generated',now],[''],['SUMMARY'],['Total rows',rows.length],['Columns',headers.length],['Unique rows',new Set(rowStrs).size],['Duplicate rows',rows.length-new Set(rowStrs).size],[''],['COLUMN INFO'],['Column','Unique values','Empty cells','Sample values']];
-    headers.forEach((h,ci)=>{const col=rows.map(r=>r[ci]||'');s.push([h,new Set(col.filter(v=>v!=='')).size,col.filter(v=>v==='').length,[...new Set(col.filter(v=>v!==''))].slice(0,3).join(', ')]);});
-    sheets.push({name:'Summary',rows:s});
-  }
-  if($('dx-data')?.checked) sheets.push({name:'Raw Data',rows:[headers,...rows]});
-  if($('dx-freq')?.checked){
-    (headers.length<=5?headers.map((_,i)=>i):[0]).forEach(ci=>{
-      const col=rows.map(r=>r[ci]||'').filter(v=>v!=='');
-      const freq={}; col.forEach(v=>{freq[v]=(freq[v]||0)+1;});
-      const s=[[`Frequency — ${headers[ci]}`],['Value','Count','% of total'],...Object.entries(freq).sort((a,b)=>b[1]-a[1]).map(([v,c])=>[v,c,((c/col.length)*100).toFixed(1)+'%'])];
-      sheets.push({name:('Freq_'+headers[ci]).slice(0,31).replace(/[\\/?*[\]:]/g,'_'),rows:s});
-    });
-  }
-  if($('dx-dupes')?.checked&&dupeRows.length) sheets.push({name:'Duplicates',rows:[['DUPLICATE ROWS'],[''],headers,...dupeRows]});
-  return sheets;
-}
-
-function buildExcelHTML(sheets){
-  const title=$('dash-title')?.value||'Data Report';
-  let html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets>`;
-  sheets.forEach(s=>{html+=`<x:ExcelWorksheet><x:Name>${xmlEsc(s.name)}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet>`;});
-  html+=`</x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--><style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt}table{border-collapse:collapse;width:100%;margin-bottom:20px}th{background:#4472C4;color:white;font-weight:bold;padding:6px 10px;border:1px solid #2F5496;text-align:left}td{padding:5px 10px;border:1px solid #D9D9D9}tr:nth-child(even) td{background:#EEF2FF}.title-row td{background:#1F3864;color:white;font-size:14pt;font-weight:bold;padding:10px;border:none}.dup-row td{background:#FFE0E0!important}h2{color:#1F3864;border-bottom:2px solid #4472C4;padding-bottom:4px}.num{text-align:right}</style></head><body>`;
-  sheets.forEach((sheet,si)=>{
-    html+=`${si>0?'<div style="page-break-before:always"></div>':''}<h2>${xmlEsc(sheet.name)}</h2><table>`;
-    sheet.rows.forEach((row,ri)=>{
-      if(row.every(c=>c===''||c==null)) return;
-      const isTitle=ri===0&&row.length===1;
-      const isHeader=!isTitle&&((sheet.name==='Raw Data'&&ri===0)||(sheet.name.startsWith('Freq')&&ri===2));
-      const isDup=sheet.name==='Duplicates'&&ri>2;
-      html+=`<tr class="${isTitle?'title-row':isDup?'dup-row':''}">`;
-      row.forEach(cell=>{
-        const v=String(cell??''),isNum=v!==''&&!isNaN(Number(v.replace('%','')));
-        html+=isTitle?`<td colspan="10">${xmlEsc(v)}</td>`:isHeader?`<th>${xmlEsc(v)}</th>`:`<td class="${isNum?'num':''}">${xmlEsc(v)}</td>`;
-      });
-      html+='</tr>';
-    });
-    html+='</table>';
-  });
-  html+='</body></html>';
-  return html;
-}
-
-on('btn-export-excel','click',()=>{
-  if(!dashParsed.rows.length){alert('Paste some data first!');return;}
-  const sheets=buildSheets();
-  const blob=new Blob([buildExcelHTML(sheets)],{type:'application/vnd.ms-excel;charset=utf-8;'});
-  const t=($('dash-title')?.value||'data-report').replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_-]/g,'');
-  Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:`${t}_${new Date().toISOString().slice(0,10)}.xls`}).click();
-  showToast('Excel downloaded!');
-});
-
-on('btn-export-csv','click',()=>{
-  if(!dashParsed.rows.length){alert('Paste some data first!');return;}
-  const sheets=buildSheets();
-  let out='';
-  sheets.forEach(s=>{out+=`\n\n===== ${s.name} =====\r\n`+s.rows.map(r=>r.map(c=>`"${String(c??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');});
-  const blob=new Blob(['\uFEFF'+out],{type:'text/csv;charset=utf-8;'});
-  const t=($('dash-title')?.value||'data-report').replace(/\s+/g,'_');
-  Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:`${t}_${new Date().toISOString().slice(0,10)}.csv`}).click();
-});
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 buildAddonGrid();
