@@ -286,6 +286,27 @@ function starSVG(filled) {
   return `<svg width="14" height="14" viewBox="0 0 24 24" fill="${filled?'currentColor':'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
 }
 
+// Shared action-button row: Copy (always), Edit (custom only), Star, Delete (custom only)
+function buildItemActions({ isCustom, isStarred }) {
+  return `
+    <div class="lib-item-actions">
+      <button class="lib-act-btn lib-act-copy" title="Copy to clipboard">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span>Copy</span>
+      </button>
+      ${isCustom ? `<button class="lib-act-btn lib-act-edit" title="Edit entry">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <span>Edit</span>
+      </button>` : ''}
+      <button class="lib-act-btn lib-act-star${isStarred?' active':''}" title="${isStarred?'Remove favorite':'Add to favorites'}">
+        ${starSVG(isStarred)}
+      </button>
+      ${isCustom ? `<button class="lib-act-btn lib-act-delete" title="Delete entry">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+      </button>` : ''}
+    </div>`;
+}
+
 // Collect every library item (custom + built-in) with a stable source/category tag
 function getAllLibraryItems() {
   const out = [];
@@ -325,14 +346,15 @@ function buildLibrary(filter) {
       const favItem = { label: item.label, source: 'custom' };
       const filled = isFav(favItem);
       const row = document.createElement('div'); row.className = 'lib-item';
-      row.innerHTML = `<div class="lib-item-info"><div class="lib-item-lbl">${esc(item.label)} <span class="lib-badge badge-${item.category||'custom'}" style="font-size:.55rem">${item.category||'custom'}</span></div>${item.desc?`<div class="lib-item-desc">${esc(item.desc)}</div>`:''}<pre class="lib-item-code">${esc(item.code)}</pre></div><div style="display:flex;flex-direction:column;gap:6px;align-items:center"><button class="lib-star-btn${filled?' active':''}" title="Favorite">${starSVG(filled)}</button><svg class="lib-copy-ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><button class="lib-del-btn" data-id="${item.id}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button></div>`;
-      row.addEventListener('click', () => { copyText(item.code); row.classList.add('flash'); setTimeout(()=>row.classList.remove('flash'),1000); });
-      row.querySelector('.lib-star-btn').addEventListener('click', e => {
+      row.innerHTML = `<div class="lib-item-info"><div class="lib-item-lbl">${esc(item.label)} <span class="lib-badge badge-${item.category||'custom'}" style="font-size:.55rem">${item.category||'custom'}</span></div>${item.desc?`<div class="lib-item-desc">${esc(item.desc)}</div>`:''}<pre class="lib-item-code">${esc(item.code)}</pre></div>${buildItemActions({isCustom:true, isStarred:filled})}`;
+      row.querySelector('.lib-act-copy').addEventListener('click', e => { e.stopPropagation(); copyText(item.code); row.classList.add('flash'); setTimeout(()=>row.classList.remove('flash'),1000); });
+      row.querySelector('.lib-act-edit').addEventListener('click', e => { e.stopPropagation(); openModal(item.code, item); });
+      row.querySelector('.lib-act-star').addEventListener('click', e => {
         e.stopPropagation(); toggleFav(favItem);
         const btn = e.currentTarget; const nowFilled = isFav(favItem);
         btn.classList.toggle('active', nowFilled); btn.innerHTML = starSVG(nowFilled);
       });
-      row.querySelector('.lib-del-btn').addEventListener('click', e => {
+      row.querySelector('.lib-act-delete').addEventListener('click', e => {
         e.stopPropagation();
         if (confirm(`Delete "${item.label}"?`)) { saveCustom(loadCustom().filter(x=>x.id!==item.id)); buildLibrary($('lib-search')?.value); buildWidget(); }
       });
@@ -354,9 +376,9 @@ function buildLibrary(filter) {
       const favItem = { label: item.label, source: section.id||section.title };
       const filled = isFav(favItem);
       const row = document.createElement('div'); row.className = 'lib-item';
-      row.innerHTML = `<div class="lib-item-info"><div class="lib-item-lbl">${esc(item.label)}</div>${item.desc?`<div class="lib-item-desc">${esc(item.desc)}</div>`:''}<pre class="lib-item-code">${esc(item.code)}</pre></div><div style="display:flex;flex-direction:column;gap:6px;align-items:center"><button class="lib-star-btn${filled?' active':''}" title="Favorite">${starSVG(filled)}</button><svg class="lib-copy-ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></div>`;
-      row.addEventListener('click', () => { copyText(item.code); row.classList.add('flash'); setTimeout(()=>row.classList.remove('flash'),1000); });
-      row.querySelector('.lib-star-btn').addEventListener('click', e => {
+      row.innerHTML = `<div class="lib-item-info"><div class="lib-item-lbl">${esc(item.label)}</div>${item.desc?`<div class="lib-item-desc">${esc(item.desc)}</div>`:''}<pre class="lib-item-code">${esc(item.code)}</pre></div>${buildItemActions({isCustom:false, isStarred:filled})}`;
+      row.querySelector('.lib-act-copy').addEventListener('click', e => { e.stopPropagation(); copyText(item.code); row.classList.add('flash'); setTimeout(()=>row.classList.remove('flash'),1000); });
+      row.querySelector('.lib-act-star').addEventListener('click', e => {
         e.stopPropagation(); toggleFav(favItem);
         const btn = e.currentTarget; const nowFilled = isFav(favItem);
         btn.classList.toggle('active', nowFilled); btn.innerHTML = starSVG(nowFilled);
@@ -390,14 +412,26 @@ function buildFavorites(filter) {
   }
 
   favItems.forEach(item => {
+    const isCustom = item.source === 'custom';
     const row = document.createElement('div'); row.className = 'lib-item fav-row';
-    row.innerHTML = `<div class="lib-item-info"><div class="lib-item-lbl">${esc(item.label)} <span class="lib-badge badge-${item.category||'custom'}" style="font-size:.55rem">${item.category||'custom'}</span></div>${item.desc?`<div class="lib-item-desc">${esc(item.desc)}</div>`:''}<pre class="lib-item-code">${esc(item.code)}</pre></div><div style="display:flex;flex-direction:column;gap:6px;align-items:center"><button class="lib-star-btn active" title="Remove favorite">${starSVG(true)}</button><svg class="lib-copy-ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></div>`;
-    row.addEventListener('click', () => { copyText(item.code); row.classList.add('flash'); setTimeout(()=>row.classList.remove('flash'),1000); });
-    row.querySelector('.lib-star-btn').addEventListener('click', e => {
+    row.innerHTML = `<div class="lib-item-info"><div class="lib-item-lbl">${esc(item.label)} <span class="lib-badge badge-${item.category||'custom'}" style="font-size:.55rem">${item.category||'custom'}</span></div>${item.desc?`<div class="lib-item-desc">${esc(item.desc)}</div>`:''}<pre class="lib-item-code">${esc(item.code)}</pre></div>${buildItemActions({isCustom, isStarred:true})}`;
+    row.querySelector('.lib-act-copy').addEventListener('click', e => { e.stopPropagation(); copyText(item.code); row.classList.add('flash'); setTimeout(()=>row.classList.remove('flash'),1000); });
+    const editBtn = row.querySelector('.lib-act-edit');
+    if (editBtn) editBtn.addEventListener('click', e => { e.stopPropagation(); openModal(item.code, item); });
+    row.querySelector('.lib-act-star').addEventListener('click', e => {
       e.stopPropagation();
       toggleFav(item);
       row.remove();
       if (!$('favorites-body').children.length) buildFavorites($('fav-search')?.value);
+    });
+    const delBtn = row.querySelector('.lib-act-delete');
+    if (delBtn) delBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (confirm(`Delete "${item.label}"?`)) {
+        saveCustom(loadCustom().filter(x=>x.id!==item.id));
+        toggleFav(item);
+        row.remove();
+      }
     });
     body.appendChild(row);
   });
@@ -406,17 +440,28 @@ on('fav-search', 'input', e => buildFavorites(e.target.value));
 
 // ── Library modal ─────────────────────────────────────────────────────────────
 let modalCat = 'custom';
-function openModal(code) {
+let editingEntryId = null; // null = adding new, otherwise editing this custom entry's id
+
+function openModal(code, existingItem) {
   const o=$('modal-overlay'); if(!o) return;
-  [$('m-label'),$('m-desc')].forEach(el=>{if(el)el.value='';});
-  const mc=$('m-code'); if(mc) mc.value=code||'';
+  editingEntryId = existingItem?.id || null;
+
+  $('m-label').value = existingItem?.label || '';
+  $('m-desc').value = existingItem?.desc || '';
+  const mc=$('m-code'); if(mc) mc.value = code || existingItem?.code || '';
   $('m-error')?.classList.add('hidden');
-  modalCat='custom';
-  document.querySelectorAll('#m-category-pills .pill').forEach(p=>p.classList.toggle('active',p.dataset.val==='custom'));
+  modalCat = existingItem?.category || 'custom';
+  document.querySelectorAll('#m-category-pills .pill').forEach(p=>p.classList.toggle('active',p.dataset.val===modalCat));
+
+  const titleEl = document.querySelector('.modal-title');
+  if (titleEl) titleEl.textContent = editingEntryId ? 'Edit library entry' : 'Add library entry';
+  const saveLabel = $('btn-modal-save-label');
+  if (saveLabel) saveLabel.textContent = editingEntryId ? 'Save changes' : 'Save entry';
+
   o.classList.remove('hidden');
   setTimeout(()=>$('m-label')?.focus(),50);
 }
-function closeModal() { $('modal-overlay')?.classList.add('hidden'); }
+function closeModal() { $('modal-overlay')?.classList.add('hidden'); editingEntryId = null; }
 
 document.querySelectorAll('#m-category-pills .pill').forEach(p =>
   p.addEventListener('click', () => {
@@ -434,15 +479,23 @@ on('btn-modal-save','click', () => {
   const label=$('m-label')?.value.trim(), code=$('m-code')?.value.trim();
   if (!label||!code) { $('m-error')?.classList.remove('hidden'); return; }
   $('m-error')?.classList.add('hidden');
-  const entry = { id:'custom_'+Date.now(), label, desc:$('m-desc')?.value.trim()||'', code, category:modalCat };
-  const entries=loadCustom(); entries.unshift(entry); saveCustom(entries);
+  const desc = $('m-desc')?.value.trim()||'';
+  const entries = loadCustom();
+
+  if (editingEntryId) {
+    const idx = entries.findIndex(e => e.id === editingEntryId);
+    if (idx !== -1) entries[idx] = { ...entries[idx], label, desc, code, category: modalCat };
+    saveCustom(entries);
+    showToast('Entry updated!');
+  } else {
+    entries.unshift({ id:'custom_'+Date.now(), label, desc, code, category:modalCat });
+    saveCustom(entries);
+    showToast('Entry saved!');
+  }
+
   closeModal();
-  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelector('[data-page="library"]')?.classList.add('active');
-  $('page-library')?.classList.add('active');
+  goToPage('library');
   buildLibrary(); buildWidget();
-  showToast('Entry saved!');
 });
 
 // ── Library widget (SQL page) ─────────────────────────────────────────────────

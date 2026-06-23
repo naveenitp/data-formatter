@@ -296,11 +296,10 @@ textarea[readonly] { background: #0d0d0f; color: #a0a0b0; cursor: default; resiz
 .lib-item {
   display: flex; align-items: flex-start; gap: 10px;
   padding: 10px 1rem; border-bottom: 1px solid var(--border);
-  cursor: pointer; transition: background 0.13s;
+  transition: background 0.13s;
 }
 .lib-item:last-child { border-bottom: none; }
 .lib-item:hover { background: var(--bg-hov); }
-.lib-item:hover .lib-copy-ic { opacity: 1; }
 .lib-item.flash { background: var(--accent-dim); }
 
 .lib-item-info { flex: 1; min-width: 0; }
@@ -311,7 +310,62 @@ textarea[readonly] { background: #0d0d0f; color: #a0a0b0; cursor: default; resiz
   background: var(--bg-inp); border: 1px solid var(--border); border-radius: 4px;
   padding: 6px 9px; white-space: pre; overflow-x: auto; max-height: 80px; overflow-y: auto;
 }
-.lib-copy-ic { flex-shrink: 0; opacity: 0.25; transition: opacity 0.13s; color: var(--text2); margin-top: 2px; }
+
+/* ── Item action buttons: medium, always visible ── */
+.lib-item-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+  align-items: stretch;
+  min-width: 76px;
+}
+
+.lib-act-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: var(--rsm);
+  border: 1px solid var(--border);
+  background: var(--bg-inp);
+  color: var(--text2);
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.lib-act-btn span { line-height: 1; }
+
+.lib-act-copy {
+  color: var(--accent-hi);
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+.lib-act-copy:hover { background: rgba(124,106,247,0.28); }
+
+.lib-act-edit:hover { border-color: var(--border-hi); color: var(--text); background: var(--bg-hov); }
+
+.lib-act-star {
+  padding: 6px;
+}
+.lib-act-star:hover { border-color: rgba(250,204,21,0.4); color: #facc15; background: rgba(250,204,21,0.08); }
+.lib-act-star.active { border-color: rgba(250,204,21,0.5); color: #facc15; background: rgba(250,204,21,0.12); }
+
+.lib-act-delete {
+  padding: 6px;
+}
+.lib-act-delete:hover { border-color: #5a2020; color: #f07070; background: rgba(220,60,60,0.12); }
+
+/* Star + delete sit side by side under copy/edit on wider rows */
+@media (min-width: 480px) {
+  .lib-item-actions {
+    flex-direction: column;
+  }
+}
 
 /* ── Toast ── */
 #toast {
@@ -391,15 +445,6 @@ textarea[readonly] { background: #0d0d0f; color: #a0a0b0; cursor: default; resiz
 
 /* custom lib section badge */
 .badge-custom { background: #2a1a3a; color: #c084f5; }
-
-/* Delete button in custom lib items */
-.lib-del-btn {
-  background: transparent; border: 1px solid transparent; border-radius: var(--rsm);
-  color: var(--text3); cursor: pointer; padding: 3px 4px; opacity: 0;
-  transition: all 0.13s; display: flex; align-items: center;
-}
-.lib-item:hover .lib-del-btn { opacity: 1; }
-.lib-del-btn:hover { border-color: #5a2020; color: #f07070; background: rgba(220,60,60,0.1); }
 
 /* ── Three-col layout (SQL page with widget) ── */
 .page-body.three-col {
@@ -1503,22 +1548,6 @@ body.aurora .page-header { background: rgba(45,212,191,0.02); }
 /* ══════════════════════════════════════════
    FAVORITES / STAR BUTTON
    ══════════════════════════════════════════ */
-
-.lib-star-btn {
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--rsm);
-  color: var(--text3);
-  cursor: pointer;
-  padding: 3px 4px;
-  display: flex;
-  align-items: center;
-  transition: all 0.13s;
-}
-.lib-star-btn:hover { color: #facc15; border-color: rgba(250,204,21,0.3); background: rgba(250,204,21,0.08); }
-.lib-star-btn.active { color: #facc15; }
-
-.fav-row { cursor: pointer; }
 
 /* ══════════════════════════════════════════
    SQL CHECKER
