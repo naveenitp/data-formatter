@@ -28,17 +28,41 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
         <span>SQL queries</span>
       </button>
+      <button class="nav-item" data-page="checker">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <span>SQL checker</span>
+      </button>
+      <button class="nav-item" data-page="csvdash">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span>CSV dashboard</span>
+      </button>
       <button class="nav-item" data-page="library">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
         <span>Library</span>
       </button>
+      <button class="nav-item" data-page="favorites">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span>Favorites</span>
+      </button>
     </nav>
     <div class="sidebar-footer">
-      <button class="theme-toggle" id="theme-toggle" title="Toggle neumorphic style">
-        <svg id="theme-icon-normal" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        <span id="theme-label">Glass</span>
-        <div class="toggle-pill" id="toggle-pill"><div class="toggle-knob"></div></div>
-      </button>
+      <div class="theme-section">
+        <div class="theme-section-title">Theme</div>
+        <div class="theme-swatches" id="theme-swatches">
+          <button class="theme-swatch active" data-theme="normal" title="Normal">
+            <span class="swatch-preview swatch-normal"></span>
+            <span class="swatch-name">Normal</span>
+          </button>
+          <button class="theme-swatch" data-theme="glass" title="Glass">
+            <span class="swatch-preview swatch-glass"></span>
+            <span class="swatch-name">Glass</span>
+          </button>
+          <button class="theme-swatch" data-theme="aurora" title="Aurora">
+            <span class="swatch-preview swatch-aurora"></span>
+            <span class="swatch-name">Aurora</span>
+          </button>
+        </div>
+      </div>
       <a href="https://github.com/" target="_blank" rel="noopener">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.167 6.839 9.49.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.004.07 1.532 1.032 1.532 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
         <span>GitHub</span>
@@ -219,6 +243,125 @@
       </div>
     </main>
 
+    <!-- ══ Page: SQL Checker ══ -->
+    <main class="page" id="page-checker">
+      <div class="page-header">
+        <h1>SQL checker</h1>
+        <p>Paste a query — get syntax checks, optimization tips, and a formatted version.</p>
+      </div>
+      <div class="page-body two-col">
+        <div class="col">
+          <section class="card">
+            <div class="card-row">
+              <div class="card-label">Your query</div>
+              <button class="btn btn-danger" id="btn-clear-checker">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>Clear
+              </button>
+            </div>
+            <textarea id="checker-input" class="dropzone" spellcheck="false" style="min-height:220px" placeholder="SELECT * FROM users WHERE id IN (1,2,3)&#10;&#10;Paste any SQL query, or drag &amp; drop a .sql/.txt file here"></textarea>
+            <div class="meta" id="checker-meta">Paste a query to analyze</div>
+          </section>
+          <button class="btn btn-primary" id="btn-check-query" style="width:100%;justify-content:center;padding:10px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Analyze query
+          </button>
+        </div>
+
+        <div class="col">
+          <section class="card">
+            <div class="card-row"><div class="card-label">Analysis</div></div>
+            <div id="checker-results"><div class="dash-empty">Run a query to see results</div></div>
+          </section>
+
+          <section class="card collapsible open">
+            <button class="ctoggle" aria-expanded="true">
+              <span class="card-label">Formatted query</span>
+              <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="cbody">
+              <div class="card-row" style="margin-bottom:8px">
+                <span class="og-title" style="margin-bottom:0">Auto-indented, keywords uppercased</span>
+                <button class="btn" id="btn-copy-formatted">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy
+                </button>
+              </div>
+              <textarea id="checker-output" readonly spellcheck="false" style="min-height:160px"></textarea>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <!-- ══ Page: CSV Dashboard ══ -->
+    <main class="page" id="page-csvdash">
+      <div class="page-header">
+        <h1>CSV dashboard</h1>
+        <p>Upload a CSV, pick chart types per column, and build a custom analytics view.</p>
+      </div>
+      <div class="page-body two-col">
+
+        <div class="col">
+          <section class="card">
+            <div class="card-row">
+              <div class="card-label">Upload CSV</div>
+              <button class="btn btn-danger" id="btn-clear-csv">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>Clear
+              </button>
+            </div>
+            <div class="csv-dropzone dropzone" id="csv-dropzone">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <p>Drag &amp; drop a .csv file here</p>
+              <p class="csv-dz-sub">or click to browse</p>
+              <input type="file" id="csv-file-input" accept=".csv,text/csv" hidden />
+            </div>
+            <div class="meta" id="csv-meta">No file loaded</div>
+          </section>
+
+          <section class="card collapsible open" id="csv-cols-card" style="display:none">
+            <button class="ctoggle" aria-expanded="true">
+              <span class="card-label">Build chart</span>
+              <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="cbody">
+              <div class="og">
+                <div class="og-title">Column</div>
+                <select id="csv-col-select" class="dash-select" style="width:100%"></select>
+              </div>
+              <div class="og">
+                <div class="og-title">Chart type</div>
+                <div class="pills" id="csv-chart-type-opts">
+                  <button class="pill active" data-val="bar">Bar</button>
+                  <button class="pill" data-val="pie">Pie</button>
+                  <button class="pill" data-val="line">Line</button>
+                  <button class="pill" data-val="stat">Stat card</button>
+                </div>
+              </div>
+              <button class="btn btn-primary" id="btn-add-chart" style="width:100%;justify-content:center;margin-top:4px">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add to dashboard
+              </button>
+            </div>
+          </section>
+        </div>
+
+        <div class="col">
+          <div class="card-row" style="margin-bottom:8px">
+            <div class="card-label">Dashboard</div>
+            <button class="btn" id="btn-export-csv-dashboard">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Export Excel
+            </button>
+          </div>
+          <div id="csv-charts-grid" class="csv-charts-grid">
+            <div class="dash-empty" id="csv-charts-empty">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              <p>Upload a CSV and add charts to build your dashboard</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
     <!-- ══ Page: Library ══ -->
     <main class="page" id="page-library">
       <div class="page-header">
@@ -237,6 +380,20 @@
           </div>
         </div>
         <div id="library-body"></div>
+      </div>
+    </main>
+
+    <!-- ══ Page: Favorites ══ -->
+    <main class="page" id="page-favorites">
+      <div class="page-header">
+        <h1>Favorites</h1>
+        <p>Your starred library entries, all in one place.</p>
+      </div>
+      <div class="page-body one-col">
+        <div class="lib-toolbar">
+          <input type="text" id="fav-search" class="lib-search" placeholder="Search favorites…" />
+        </div>
+        <div id="favorites-body"></div>
       </div>
     </main>
 
@@ -287,6 +444,34 @@
       </div>
     </div>
   </div>
+
+  <!-- Mobile bottom nav -->
+  <nav id="mobile-nav">
+    <button class="mnav-item active" data-page="formatter">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      <span>Format</span>
+    </button>
+    <button class="mnav-item" data-page="sql">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      <span>SQL</span>
+    </button>
+    <button class="mnav-item" data-page="checker">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <span>Check</span>
+    </button>
+    <button class="mnav-item" data-page="csvdash">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>CSV</span>
+    </button>
+    <button class="mnav-item" data-page="library">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span>Library</span>
+    </button>
+    <button class="mnav-item" data-page="favorites">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span>Stars</span>
+    </button>
+  </nav>
 
   <script src="config.js"></script>
   <script src="app.js"></script>
