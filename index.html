@@ -296,23 +296,23 @@
     <main class="page" id="page-csvdash">
       <div class="page-header">
         <h1>CSV dashboard</h1>
-        <p>Upload a CSV, pick chart types per column, and build a custom analytics view.</p>
+        <p>Upload a CSV, Excel, or text file — see every column at a glance, then build custom charts.</p>
       </div>
       <div class="page-body two-col">
 
         <div class="col">
           <section class="card">
             <div class="card-row">
-              <div class="card-label">Upload CSV</div>
+              <div class="card-label">Upload file</div>
               <button class="btn btn-danger" id="btn-clear-csv">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>Clear
               </button>
             </div>
             <div class="csv-dropzone dropzone" id="csv-dropzone">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              <p>Drag &amp; drop a .csv file here</p>
+              <p>Drag &amp; drop a .csv, .xlsx, .xls or .txt file</p>
               <p class="csv-dz-sub">or click to browse</p>
-              <input type="file" id="csv-file-input" accept=".csv,text/csv" hidden />
+              <input type="file" id="csv-file-input" accept=".csv,.xlsx,.xls,.txt,text/csv,text/plain" hidden />
             </div>
             <div class="meta" id="csv-meta">No file loaded</div>
           </section>
@@ -345,8 +345,14 @@
         </div>
 
         <div class="col">
+          <!-- All-columns overview: auto-generated, always visible once file loads -->
+          <section class="card" id="csv-overview-card" style="display:none">
+            <div class="card-label" style="margin-bottom:10px">All columns overview</div>
+            <div id="csv-overview-grid" class="csv-overview-grid"></div>
+          </section>
+
           <div class="card-row" style="margin-bottom:8px">
-            <div class="card-label">Dashboard</div>
+            <div class="card-label">Your dashboard</div>
             <button class="btn" id="btn-export-csv-dashboard">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               Export Excel
@@ -355,7 +361,7 @@
           <div id="csv-charts-grid" class="csv-charts-grid">
             <div class="dash-empty" id="csv-charts-empty">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-              <p>Upload a CSV and add charts to build your dashboard</p>
+              <p>Upload a file and add charts to build your dashboard</p>
             </div>
           </div>
         </div>
@@ -473,6 +479,7 @@
     </button>
   </nav>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="config.js"></script>
   <script src="app.js"></script>
 </body>

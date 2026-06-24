@@ -690,7 +690,7 @@ on('btn-clear-checker', 'click', () => {
 });
 on('btn-copy-formatted', 'click', () => copyText($('checker-output')?.value));
 
-// ── CSV Dashboard ─────────────────────────────────────────────────────────────────
+// ── CSV / Excel / TXT Dashboard ────────────────────────────────────────────────
 let csvParsed = { headers: [], rows: [] };
 let csvCharts = []; // { id, colIdx, colName, type }
 
@@ -713,17 +713,61 @@ function parseCSVText(text) {
   return { headers, rows };
 }
 
+// Generic delimited text parser for .txt (auto-detect tab/pipe/comma)
+function parseDelimitedText(text) {
+  const lines = text.split('\n').map(l => l.replace(/\r$/,'')).filter(l => l.trim() !== '');
+  if (!lines.length) return { headers: [], rows: [] };
+  const sample = lines[0];
+  const counts = { '\t': (sample.match(/\t/g)||[]).length, '|': (sample.match(/\|/g)||[]).length, ',': (sample.match(/,/g)||[]).length };
+  const delim = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+  if (delim[1] === 0) return parseCSVText(text); // fallback
+  const sep = delim[0];
+  const splitLine = line => line.split(sep).map(c => c.trim());
+  const headers = splitLine(lines[0]);
+  const rows = lines.slice(1).map(splitLine);
+  return { headers, rows };
+}
+
+function parseExcelArrayBuffer(buffer) {
+  if (typeof XLSX === 'undefined') return { headers: [], rows: [] };
+  const wb = XLSX.read(buffer, { type: 'array' });
+  const firstSheet = wb.Sheets[wb.SheetNames[0]];
+  const data = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '', raw: false });
+  const filtered = data.filter(row => row.some(cell => String(cell).trim() !== ''));
+  if (!filtered.length) return { headers: [], rows: [] };
+  const headers = filtered[0].map(h => String(h).trim());
+  const rows = filtered.slice(1).map(r => headers.map((_, i) => String(r[i] ?? '').trim()));
+  return { headers, rows };
+}
+
 function loadCSVFile(file) {
-  const reader = new FileReader();
-  reader.onload = () => {
-    csvParsed = parseCSVText(reader.result);
-    csvCharts = [];
-    renderCSVMeta();
-    renderCSVColSelect();
-    renderCSVCharts();
-    showToast('CSV loaded: ' + file.name);
-  };
-  reader.readAsText(file);
+  const name = file.name.toLowerCase();
+  const isExcel = name.endsWith('.xlsx') || name.endsWith('.xls');
+
+  if (isExcel) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      csvParsed = parseExcelArrayBuffer(reader.result);
+      onFileLoaded(file);
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    const reader = new FileReader();
+    reader.onload = () => {
+      csvParsed = name.endsWith('.txt') ? parseDelimitedText(reader.result) : parseCSVText(reader.result);
+      onFileLoaded(file);
+    };
+    reader.readAsText(file);
+  }
+}
+
+function onFileLoaded(file) {
+  csvCharts = [];
+  renderCSVMeta();
+  renderCSVColSelect();
+  renderCSVOverview();
+  renderCSVCharts();
+  showToast('File loaded: ' + file.name);
 }
 
 function renderCSVMeta() {
@@ -747,6 +791,51 @@ function isNumericCol(idx) {
   const vals = colValues(idx).slice(0, 50);
   if (!vals.length) return false;
   return vals.every(v => !isNaN(Number(v)));
+}
+
+// All-columns overview: shows every column's name + unique value count + top value at a glance
+function renderCSVOverview() {
+  const card = $('csv-overview-card'), grid = $('csv-overview-grid');
+  if (!card || !grid) return;
+  const { headers, rows } = csvParsed;
+  if (!rows.length) { card.style.display = 'none'; grid.innerHTML = ''; return; }
+  card.style.display = '';
+
+  grid.innerHTML = headers.map((h, idx) => {
+    const vals = colValues(idx);
+    const filled = vals.length;
+    const empty = rows.length - filled;
+    const freq = {};
+    vals.forEach(v => { freq[v] = (freq[v]||0) + 1; });
+    const unique = Object.keys(freq).length;
+    const top = Object.entries(freq).sort((a,b)=>b[1]-a[1])[0];
+    const numeric = isNumericCol(idx);
+
+    return `
+      <div class="csv-ov-card" data-col-idx="${idx}">
+        <div class="csv-ov-name" title="${esc(h)}">${esc(h)}</div>
+        <div class="csv-ov-stats">
+          <div class="csv-ov-stat"><span class="csv-ov-val">${filled}</span><span class="csv-ov-lbl">Filled</span></div>
+          <div class="csv-ov-stat"><span class="csv-ov-val">${unique}</span><span class="csv-ov-lbl">Unique</span></div>
+          ${empty > 0 ? `<div class="csv-ov-stat"><span class="csv-ov-val csv-ov-warn">${empty}</span><span class="csv-ov-lbl">Empty</span></div>` : ''}
+        </div>
+        ${top ? `<div class="csv-ov-top" title="${esc(top[0])}">Top: <strong>${esc(top[0].length>18?top[0].slice(0,17)+'…':top[0])}</strong> (${top[1]})</div>` : ''}
+        <span class="csv-ov-type-badge ${numeric?'csv-ov-numeric':'csv-ov-text'}">${numeric?'numeric':'text'}</span>
+        <button class="csv-ov-add-btn" data-col-idx="${idx}" title="Add bar chart for this column">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add chart
+        </button>
+      </div>`;
+  }).join('');
+
+  grid.querySelectorAll('.csv-ov-add-btn').forEach(btn =>
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.colIdx);
+      csvCharts.push({ id: Date.now(), colIdx: idx, colName: csvParsed.headers[idx], type: 'bar' });
+      renderCSVCharts();
+      showToast('Chart added: ' + csvParsed.headers[idx]);
+    })
+  );
 }
 
 function buildChartHTML(chart) {
@@ -864,7 +953,7 @@ on('btn-add-chart', 'click', () => {
 on('btn-clear-csv', 'click', () => {
   csvParsed = { headers: [], rows: [] };
   csvCharts = [];
-  renderCSVMeta(); renderCSVColSelect(); renderCSVCharts();
+  renderCSVMeta(); renderCSVColSelect(); renderCSVOverview(); renderCSVCharts();
   const fi = $('csv-file-input'); if (fi) fi.value = '';
 });
 
