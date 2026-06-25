@@ -727,16 +727,48 @@ function extractTableBlocks(text) {
   const rawLines = text.split('\n').map(l => l.replace(/\r$/, ''));
   const blocks = [];
   let current = [];
+  let currentBorderSig = null;   // exact border string of the table currently being read
+  let borderCountInCurrent = 0;  // MySQL emits exactly 3 borders per table: top, after-header, bottom
 
   const flush = () => {
-    if (current.length) { blocks.push(current); current = []; }
+    if (current.length) blocks.push(current);
+    current = [];
+    currentBorderSig = null;
+    borderCountInCurrent = 0;
   };
 
   for (const line of rawLines) {
     const t = line.trim();
     if (t === '') { flush(); continue; }
     if (isFooterLine(t)) { flush(); continue; }
-    if (isBorderLine(t) || isPgSeparator(t) || t.includes('|')) {
+
+    if (isBorderLine(t)) {
+      if (currentBorderSig === null) {
+        // first border of a fresh block
+        currentBorderSig = t;
+        borderCountInCurrent = 1;
+        current.push(line);
+      } else if (t === currentBorderSig) {
+        borderCountInCurrent++;
+        current.push(line);
+        // A 4th identical border can't belong to the same table (MySQL only ever
+        // emits 3 per result set) — it's the TOP border of a new same-shaped table
+        // pasted immediately after, with no blank line in between.
+        if (borderCountInCurrent === 4) {
+          current.pop();
+          flush();
+          currentBorderSig = t;
+          borderCountInCurrent = 1;
+          current.push(line);
+        }
+      } else {
+        // Different column widths -> a new table has started right here
+        flush();
+        currentBorderSig = t;
+        borderCountInCurrent = 1;
+        current.push(line);
+      }
+    } else if (isPgSeparator(t) || t.includes('|')) {
       current.push(line);
     } else {
       // Non-table line (e.g. the SQL query itself, a notice, prompt) — discard, end current block
