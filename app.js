@@ -869,7 +869,13 @@ function renderSQLTablePreview() {
     titleRow.style.marginBottom = '8px';
     titleRow.innerHTML = `
       <span class="card-label" style="margin-bottom:0">${esc(group.title)}</span>
-      <span class="stat">${group.rows.length} row${group.rows.length!==1?'s':''} · ${group.headers.length} col${group.headers.length!==1?'s':''}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="stat">${group.rows.length} row${group.rows.length!==1?'s':''} · ${group.headers.length} col${group.headers.length!==1?'s':''}</span>
+        <button class="btn btn-screenshot" data-group-idx="${gi}" title="Save as image for WhatsApp">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Screenshot
+        </button>
+      </div>
     `;
     card.appendChild(titleRow);
 
@@ -887,6 +893,146 @@ function renderSQLTablePreview() {
 
     container.appendChild(card);
   });
+
+  container.querySelectorAll('.btn-screenshot').forEach(btn =>
+    btn.addEventListener('click', () => downloadTableScreenshot(sqlTableGroups[parseInt(btn.dataset.groupIdx)], addSourceCol))
+  );
+}
+
+// ── Screenshot export (canvas-rendered PNG, perfect for WhatsApp) ─────────────
+function downloadTableScreenshot(group, addSourceCol) {
+  const showSource = group.merged && addSourceCol;
+  const headers = showSource ? ['Source', ...group.headers] : group.headers;
+  const rows = group.rows.map((r, i) => showSource ? [group.sources[i], ...r] : r);
+
+  // ── Style constants ──
+  const PADDING = 24;
+  const TITLE_H = 44;
+  const ROW_H = 36;
+  const HEADER_H = 40;
+  const CELL_PAD_X = 14;
+  const FONT = '600 14px -apple-system, Segoe UI, Roboto, sans-serif';
+  const CELL_FONT = '14px -apple-system, Segoe UI, Roboto, sans-serif';
+  const MIN_COL_W = 70;
+  const MAX_COL_W = 280;
+
+  // ── Measure text to compute column widths ──
+  const measureCanvas = document.createElement('canvas');
+  const mctx = measureCanvas.getContext('2d');
+
+  function colWidth(colIdx) {
+    mctx.font = FONT;
+    let max = mctx.measureText(headers[colIdx]).width;
+    mctx.font = CELL_FONT;
+    rows.forEach(r => {
+      const w = mctx.measureText(String(r[colIdx] ?? '')).width;
+      if (w > max) max = w;
+    });
+    return Math.min(MAX_COL_W, Math.max(MIN_COL_W, max + CELL_PAD_X * 2));
+  }
+
+  const colWidths = headers.map((_, i) => colWidth(i));
+  const tableW = colWidths.reduce((a,b) => a+b, 0);
+  const visibleRows = rows.slice(0, 200); // sane cap for image size
+  const tableH = HEADER_H + visibleRows.length * ROW_H;
+  const footerH = rows.length > 200 ? 28 : 0;
+  const canvasW = tableW + PADDING * 2;
+  const canvasH = TITLE_H + tableH + PADDING * 2 + footerH + 30; // +30 for watermark
+
+  const dpr = window.devicePixelRatio || 1;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvasW * dpr;
+  canvas.height = canvasH * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  // ── Background ──
+  ctx.fillStyle = '#0e0e10';
+  ctx.fillRect(0, 0, canvasW, canvasH);
+
+  // ── Title ──
+  ctx.fillStyle = '#f0f0f2';
+  ctx.font = '700 17px -apple-system, Segoe UI, Roboto, sans-serif';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(group.title, PADDING, PADDING + TITLE_H / 2);
+  ctx.fillStyle = '#7c6af7';
+  ctx.font = '600 12px -apple-system, Segoe UI, Roboto, sans-serif';
+  const rowLabel = `${rows.length} row${rows.length!==1?'s':''} · ${headers.length} col${headers.length!==1?'s':''}`;
+  const rowLabelW = ctx.measureText(rowLabel).width;
+  ctx.fillText(rowLabel, canvasW - PADDING - rowLabelW, PADDING + TITLE_H / 2);
+
+  let y = PADDING + TITLE_H;
+
+  // ── Header row ──
+  ctx.fillStyle = '#4c3fc7';
+  ctx.fillRect(PADDING, y, tableW, HEADER_H);
+  let x = PADDING;
+  ctx.font = FONT;
+  ctx.fillStyle = '#ffffff';
+  headers.forEach((h, i) => {
+    ctx.textAlign = 'center';
+    ctx.fillText(truncateText(ctx, h, colWidths[i] - CELL_PAD_X), x + colWidths[i] / 2, y + HEADER_H / 2);
+    x += colWidths[i];
+  });
+  y += HEADER_H;
+
+  // ── Data rows ──
+  ctx.font = CELL_FONT;
+  visibleRows.forEach((r, ri) => {
+    ctx.fillStyle = ri % 2 === 0 ? '#16161a' : '#1c1c22';
+    ctx.fillRect(PADDING, y, tableW, ROW_H);
+    x = PADDING;
+    r.forEach((cell, ci) => {
+      const isNum = cell !== '' && !isNaN(Number(cell));
+      ctx.fillStyle = isNum ? '#c4b5fd' : '#e0e0ea';
+      ctx.textAlign = 'center';
+      ctx.fillText(truncateText(ctx, String(cell ?? ''), colWidths[ci] - CELL_PAD_X), x + colWidths[ci] / 2, y + ROW_H / 2);
+      x += colWidths[ci];
+    });
+    y += ROW_H;
+  });
+
+  // ── Column separators ──
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  x = PADDING;
+  headers.forEach((_, i) => {
+    x += colWidths[i];
+    if (i < headers.length - 1) {
+      ctx.beginPath(); ctx.moveTo(x, PADDING + TITLE_H); ctx.lineTo(x, PADDING + TITLE_H + tableH); ctx.stroke();
+    }
+  });
+  // outer border
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.strokeRect(PADDING, PADDING + TITLE_H, tableW, tableH);
+
+  if (footerH) {
+    ctx.fillStyle = '#888892';
+    ctx.font = '12px -apple-system, Segoe UI, Roboto, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`Showing 200 of ${rows.length} rows`, PADDING, y + 16);
+    y += footerH;
+  }
+
+  // ── Watermark ──
+  ctx.fillStyle = '#55555f';
+  ctx.font = '11px -apple-system, Segoe UI, Roboto, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText('Generated with DataFmt', canvasW - PADDING, canvasH - 14);
+
+  // ── Download ──
+  canvas.toBlob(blob => {
+    const fname = (group.title || 'table').replace(/[^a-zA-Z0-9_-]+/g, '_').slice(0, 40) + '.png';
+    Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: fname }).click();
+    showToast('Screenshot saved!');
+  }, 'image/png');
+}
+
+function truncateText(ctx, text, maxWidth) {
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  let t = text;
+  while (t.length > 1 && ctx.measureText(t + '…').width > maxWidth) t = t.slice(0, -1);
+  return t + '…';
 }
 
 function updateSQLTableMeta() {
@@ -935,14 +1081,18 @@ on('btn-download-excel', 'click', () => {
     const showSource = group.merged && addSourceCol;
     const headers = showSource ? ['Source', ...group.headers] : group.headers;
     const rows = group.rows.map((r, i) => showSource ? [group.sources[i], ...r] : r);
-    const heading = sqlTableGroups.length > 1 ? `<h2>${xmlEscCSV(group.title)}</h2>` : '';
+    const heading = sqlTableGroups.length > 1 ? `<h2>${xmlEscCSV(group.title)}<span class="subtle"> &nbsp;·&nbsp; ${rows.length} row${rows.length!==1?'s':''}</span></h2>` : '';
+    const colgroup = `<colgroup>${headers.map(() => '<col style="width:140px">').join('')}</colgroup>`;
     return `${idx > 0 ? '<div style="page-break-before:always"></div>' : ''}${heading}
       <table>
-        <tr>${headers.map(h => `<th>${xmlEscCSV(h)}</th>`).join('')}</tr>
-        ${rows.map(r => `<tr>${r.map(c => {
+        ${colgroup}
+        <thead><tr>${headers.map(h => `<th>${xmlEscCSV(h)}</th>`).join('')}</tr></thead>
+        <tbody>
+        ${rows.map((r, ri) => `<tr class="${ri % 2 === 0 ? 'r-even' : 'r-odd'}">${r.map(c => {
           const isNum = c !== '' && !isNaN(Number(c));
-          return `<td${isNum ? ' style="text-align:right"' : ''}>${xmlEscCSV(c)}</td>`;
+          return `<td class="${isNum ? 'cell-num' : 'cell-text'}">${xmlEscCSV(c)}</td>`;
         }).join('')}</tr>`).join('')}
+        </tbody>
       </table>`;
   };
 
@@ -952,12 +1102,44 @@ on('btn-download-excel', 'click', () => {
 ${sqlTableGroups.map((g,i) => `<x:ExcelWorksheet><x:Name>${xmlEscCSV((g.title||baseSheetName).slice(0,31))}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet>`).join('')}
 </x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
 <style>
-  body{font-family:Calibri,Arial,sans-serif;font-size:11pt}
-  table{border-collapse:collapse;width:100%;margin-bottom:20px}
-  th{background:#4472C4;color:white;font-weight:bold;padding:6px 10px;border:1px solid #2F5496;text-align:left}
-  td{padding:5px 10px;border:1px solid #D9D9D9}
-  tr:nth-child(even) td{background:#EEF2FF}
-  h2{color:#1F3864;border-bottom:2px solid #4472C4;padding-bottom:4px}
+  body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; color: #1f2937; }
+  table { border-collapse: collapse; width: 100%; margin-bottom: 28px; table-layout: fixed; }
+
+  thead th {
+    background: #1F3864;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 11.5pt;
+    padding: 9px 10px;
+    border: 1px solid #14274a;
+    text-align: center;
+    vertical-align: middle;
+    mso-pattern: gray-0;
+  }
+
+  td {
+    padding: 7px 10px;
+    border: 1px solid #D6DCE5;
+    text-align: center;
+    vertical-align: middle;
+    mso-number-format: "General";
+  }
+
+  .cell-text { text-align: center; color: #1f2937; }
+  .cell-num  { text-align: center; color: #1F3864; font-weight: 500; mso-number-format: "0"; }
+
+  tr.r-even td { background: #F2F5FB; }
+  tr.r-odd  td { background: #FFFFFF; }
+
+  h2 {
+    color: #1F3864;
+    font-size: 14pt;
+    border-bottom: 2.5px solid #1F3864;
+    padding-bottom: 6px;
+    margin-top: 6px;
+    margin-bottom: 10px;
+  }
+  h2 .subtle { color: #6B7A99; font-size: 10.5pt; font-weight: normal; }
 </style></head><body>
 ${sqlTableGroups.map(sheetBlock).join('')}
 </body></html>`;

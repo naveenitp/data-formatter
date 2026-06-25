@@ -1813,3 +1813,14 @@ body.aurora .page-header { background: rgba(45,212,191,0.02); }
 #csv-tables-preview .dash-preview-wrap {
   border-radius: var(--rsm);
 }
+
+/* ── Screenshot button ── */
+.btn-screenshot {
+  background: rgba(37,211,102,0.12);
+  border-color: rgba(37,211,102,0.4);
+  color: #25d366;
+}
+.btn-screenshot:hover {
+  background: rgba(37,211,102,0.2);
+  border-color: rgba(37,211,102,0.6);
+}
