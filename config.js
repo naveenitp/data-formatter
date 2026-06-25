@@ -155,6 +155,18 @@ const ADDONS = [
       .filter(x => x !== ''),
   },
 
+  {
+    id: 'macFormat',
+    name: 'Format as MAC address',
+    desc: 'Insert colons every 2 chars — 00008384000DD51A → 00:00:83:84:00:0D:D5:1A',
+    default: false,
+    apply: (items) => items.map(x => {
+      const hex = x.replace(/[^0-9A-Fa-f]/g, '').toUpperCase();
+      if (!hex) return x;
+      return hex.match(/.{1,2}/g).join(':');
+    }),
+  },
+
   // ── Add more addons below ─────────────────────────────────────────────────
   //
   // {
