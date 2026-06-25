@@ -690,304 +690,119 @@ on('btn-clear-checker', 'click', () => {
 });
 on('btn-copy-formatted', 'click', () => copyText($('checker-output')?.value));
 
-// ── CSV / Excel / TXT Dashboard ────────────────────────────────────────────────
-let csvParsed = { headers: [], rows: [] };
-let csvCharts = []; // { id, colIdx, colName, type }
+// ── SQL Table → Excel ─────────────────────────────────────────────────────────
+let sqlTableParsed = { headers: [], rows: [] };
 
-function parseCSVText(text) {
-  const lines = text.split('\n').map(l => l.replace(/\r$/,'')).filter(l => l.trim() !== '');
+// Parses MySQL/PostgreSQL CLI-style table output:
+// +----+----------+-----+
+// | id | name     | age |
+// +----+----------+-----+
+// | 1  | John Doe | 25  |
+// +----+----------+-----+
+// Also tolerates plain pipe-rows with no border lines, and strips a trailing
+// "N rows in set" / "(N rows)" summary line some clients print.
+function parseSQLTable(text) {
+  const allLines = text.split('\n').map(l => l.replace(/\r$/, ''));
+  const lines = allLines.filter(l => {
+    const t = l.trim();
+    if (t === '') return false;
+    if (/^\+?[-+]+\+?$/.test(t)) return false;               // +----+----+ or ----+----+ border/separator
+    if (/^\d+\s+rows?\s+in\s+set/i.test(t)) return false;     // MySQL footer
+    if (/^\(\d+\s+rows?\)/i.test(t)) return false;             // Postgres footer
+    return true;
+  });
   if (!lines.length) return { headers: [], rows: [] };
-  const splitLine = line => {
-    const cells = []; let cur = ''; let inQ = false;
-    for (let i=0;i<line.length;i++) {
-      const c = line[i];
-      if (c === '"') inQ = !inQ;
-      else if (c === ',' && !inQ) { cells.push(cur); cur=''; }
-      else cur += c;
-    }
-    cells.push(cur);
-    return cells.map(c => c.trim());
+
+  const splitRow = line => {
+    let t = line.trim();
+    if (t.startsWith('|')) t = t.slice(1);
+    if (t.endsWith('|')) t = t.slice(0, -1);
+    return t.split('|').map(c => c.trim());
   };
-  const headers = splitLine(lines[0]);
-  const rows = lines.slice(1).map(splitLine);
+
+  const allRows = lines.map(splitRow);
+  const maxCols = Math.max(...allRows.map(r => r.length));
+  const normalized = allRows.map(r => { while (r.length < maxCols) r.push(''); return r; });
+
+  const headers = normalized[0];
+  const rows = normalized.slice(1).filter(r => r.some(c => c !== ''));
   return { headers, rows };
 }
 
-// Generic delimited text parser for .txt (auto-detect tab/pipe/comma)
-function parseDelimitedText(text) {
-  const lines = text.split('\n').map(l => l.replace(/\r$/,'')).filter(l => l.trim() !== '');
-  if (!lines.length) return { headers: [], rows: [] };
-  const sample = lines[0];
-  const counts = { '\t': (sample.match(/\t/g)||[]).length, '|': (sample.match(/\|/g)||[]).length, ',': (sample.match(/,/g)||[]).length };
-  const delim = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
-  if (delim[1] === 0) return parseCSVText(text); // fallback
-  const sep = delim[0];
-  const splitLine = line => line.split(sep).map(c => c.trim());
-  const headers = splitLine(lines[0]);
-  const rows = lines.slice(1).map(splitLine);
-  return { headers, rows };
-}
-
-function parseExcelArrayBuffer(buffer) {
-  if (typeof XLSX === 'undefined') return { headers: [], rows: [] };
-  const wb = XLSX.read(buffer, { type: 'array' });
-  const firstSheet = wb.Sheets[wb.SheetNames[0]];
-  const data = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '', raw: false });
-  const filtered = data.filter(row => row.some(cell => String(cell).trim() !== ''));
-  if (!filtered.length) return { headers: [], rows: [] };
-  const headers = filtered[0].map(h => String(h).trim());
-  const rows = filtered.slice(1).map(r => headers.map((_, i) => String(r[i] ?? '').trim()));
-  return { headers, rows };
-}
-
-function loadCSVFile(file) {
-  const name = file.name.toLowerCase();
-  const isExcel = name.endsWith('.xlsx') || name.endsWith('.xls');
-
-  if (isExcel) {
-    const reader = new FileReader();
-    reader.onload = () => {
-      csvParsed = parseExcelArrayBuffer(reader.result);
-      onFileLoaded(file);
-    };
-    reader.readAsArrayBuffer(file);
-  } else {
-    const reader = new FileReader();
-    reader.onload = () => {
-      csvParsed = name.endsWith('.txt') ? parseDelimitedText(reader.result) : parseCSVText(reader.result);
-      onFileLoaded(file);
-    };
-    reader.readAsText(file);
-  }
-}
-
-function onFileLoaded(file) {
-  csvCharts = [];
-  renderCSVMeta();
-  renderCSVColSelect();
-  renderCSVOverview();
-  renderCSVCharts();
-  showToast('File loaded: ' + file.name);
-}
-
-function renderCSVMeta() {
-  const meta = $('csv-meta'); if (!meta) return;
-  const { headers, rows } = csvParsed;
-  meta.textContent = rows.length ? `${rows.length} rows · ${headers.length} columns` : 'No file loaded';
-  const colsCard = $('csv-cols-card');
-  if (colsCard) colsCard.style.display = rows.length ? '' : 'none';
-}
-
-function renderCSVColSelect() {
-  const sel = $('csv-col-select'); if (!sel) return;
-  sel.innerHTML = csvParsed.headers.map((h,i) => `<option value="${i}">${esc(h)}</option>`).join('');
-}
-
-function colValues(idx) {
-  return csvParsed.rows.map(r => r[idx]).filter(v => v !== undefined && v !== '');
-}
-
-function isNumericCol(idx) {
-  const vals = colValues(idx).slice(0, 50);
-  if (!vals.length) return false;
-  return vals.every(v => !isNaN(Number(v)));
-}
-
-// All-columns overview: shows every column's name + unique value count + top value at a glance
-function renderCSVOverview() {
-  const card = $('csv-overview-card'), grid = $('csv-overview-grid');
-  if (!card || !grid) return;
-  const { headers, rows } = csvParsed;
-  if (!rows.length) { card.style.display = 'none'; grid.innerHTML = ''; return; }
-  card.style.display = '';
-
-  grid.innerHTML = headers.map((h, idx) => {
-    const vals = colValues(idx);
-    const filled = vals.length;
-    const empty = rows.length - filled;
-    const freq = {};
-    vals.forEach(v => { freq[v] = (freq[v]||0) + 1; });
-    const unique = Object.keys(freq).length;
-    const top = Object.entries(freq).sort((a,b)=>b[1]-a[1])[0];
-    const numeric = isNumericCol(idx);
-
-    return `
-      <div class="csv-ov-card" data-col-idx="${idx}">
-        <div class="csv-ov-name" title="${esc(h)}">${esc(h)}</div>
-        <div class="csv-ov-stats">
-          <div class="csv-ov-stat"><span class="csv-ov-val">${filled}</span><span class="csv-ov-lbl">Filled</span></div>
-          <div class="csv-ov-stat"><span class="csv-ov-val">${unique}</span><span class="csv-ov-lbl">Unique</span></div>
-          ${empty > 0 ? `<div class="csv-ov-stat"><span class="csv-ov-val csv-ov-warn">${empty}</span><span class="csv-ov-lbl">Empty</span></div>` : ''}
-        </div>
-        ${top ? `<div class="csv-ov-top" title="${esc(top[0])}">Top: <strong>${esc(top[0].length>18?top[0].slice(0,17)+'…':top[0])}</strong> (${top[1]})</div>` : ''}
-        <span class="csv-ov-type-badge ${numeric?'csv-ov-numeric':'csv-ov-text'}">${numeric?'numeric':'text'}</span>
-        <button class="csv-ov-add-btn" data-col-idx="${idx}" title="Add bar chart for this column">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add chart
-        </button>
-      </div>`;
-  }).join('');
-
-  grid.querySelectorAll('.csv-ov-add-btn').forEach(btn =>
-    btn.addEventListener('click', () => {
-      const idx = parseInt(btn.dataset.colIdx);
-      csvCharts.push({ id: Date.now(), colIdx: idx, colName: csvParsed.headers[idx], type: 'bar' });
-      renderCSVCharts();
-      showToast('Chart added: ' + csvParsed.headers[idx]);
-    })
-  );
-}
-
-function buildChartHTML(chart) {
-  const { colIdx, colName, type } = chart;
-  const vals = colValues(colIdx);
-  if (type === 'stat') {
-    const numeric = isNumericCol(colIdx);
-    let statHTML;
-    if (numeric) {
-      const nums = vals.map(Number);
-      const sum = nums.reduce((a,b)=>a+b,0);
-      const avg = sum / nums.length;
-      statHTML = `
-        <div class="csv-stat-grid">
-          <div class="csv-stat-item"><span class="csv-stat-val">${nums.length}</span><span class="csv-stat-lbl">Count</span></div>
-          <div class="csv-stat-item"><span class="csv-stat-val">${sum.toLocaleString(undefined,{maximumFractionDigits:2})}</span><span class="csv-stat-lbl">Sum</span></div>
-          <div class="csv-stat-item"><span class="csv-stat-val">${avg.toLocaleString(undefined,{maximumFractionDigits:2})}</span><span class="csv-stat-lbl">Average</span></div>
-          <div class="csv-stat-item"><span class="csv-stat-val">${Math.min(...nums).toLocaleString()}</span><span class="csv-stat-lbl">Min</span></div>
-          <div class="csv-stat-item"><span class="csv-stat-val">${Math.max(...nums).toLocaleString()}</span><span class="csv-stat-lbl">Max</span></div>
-        </div>`;
-    } else {
-      const unique = new Set(vals).size;
-      statHTML = `
-        <div class="csv-stat-grid">
-          <div class="csv-stat-item"><span class="csv-stat-val">${vals.length}</span><span class="csv-stat-lbl">Count</span></div>
-          <div class="csv-stat-item"><span class="csv-stat-val">${unique}</span><span class="csv-stat-lbl">Unique</span></div>
-        </div>`;
-    }
-    return statHTML;
-  }
-
-  // Frequency-based charts (bar / pie / line)
-  const freq = {};
-  vals.forEach(v => { freq[v] = (freq[v]||0) + 1; });
-  const sorted = Object.entries(freq).sort((a,b) => b[1]-a[1]).slice(0, 12);
-  const maxF = sorted[0]?.[1] || 1;
-  const total = vals.length;
-
-  if (type === 'bar' || type === 'line') {
-    return `<div class="csv-bar-chart">${sorted.map(([val,count]) => `
-      <div class="dash-bar-row">
-        <span class="dash-bar-lbl" title="${esc(val)}">${esc(val.length>12?val.slice(0,11)+'…':val)}</span>
-        <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${Math.round(count/maxF*100)}%"></div></div>
-        <span class="dash-bar-count">${count}</span>
-      </div>`).join('')}</div>`;
-  }
-
-  if (type === 'pie') {
-    const colors = ['#7c6af7','#34d399','#fb923c','#60a5fa','#f472b6','#facc15','#a78bfa','#2dd4bf','#fb7185','#94a3b8','#4ade80','#38bdf8'];
-    let cumPct = 0;
-    const gradientParts = sorted.map(([val,count], i) => {
-      const pct = (count/total)*100;
-      const start = cumPct; cumPct += pct;
-      return `${colors[i%colors.length]} ${start}% ${cumPct}%`;
-    });
-    const legend = sorted.map(([val,count], i) => `
-      <div class="csv-pie-legend-row">
-        <span class="csv-pie-dot" style="background:${colors[i%colors.length]}"></span>
-        <span class="csv-pie-legend-label" title="${esc(val)}">${esc(val.length>16?val.slice(0,15)+'…':val)}</span>
-        <span class="csv-pie-legend-pct">${((count/total)*100).toFixed(1)}%</span>
-      </div>`).join('');
-    return `
-      <div class="csv-pie-wrap">
-        <div class="csv-pie" style="background:conic-gradient(${gradientParts.join(',')})"></div>
-        <div class="csv-pie-legend">${legend}</div>
-      </div>`;
-  }
-  return '';
-}
-
-function renderCSVCharts() {
-  const grid = $('csv-charts-grid'); if (!grid) return;
-  if (!csvCharts.length) {
-    grid.innerHTML = `<div class="dash-empty" id="csv-charts-empty">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-      <p>Upload a CSV and add charts to build your dashboard</p>
+function renderSQLTablePreview() {
+  const wrap = $('csv-preview-wrap'); if (!wrap) return;
+  const { headers, rows } = sqlTableParsed;
+  if (!rows.length) {
+    wrap.innerHTML = `<div class="dash-empty">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+      <p>Paste raw SQL output and click "Parse table" to preview</p>
     </div>`;
     return;
   }
-  grid.innerHTML = csvCharts.map(chart => `
-    <div class="csv-chart-card" data-chart-id="${chart.id}">
-      <div class="csv-chart-card-hdr">
-        <span class="csv-chart-title">${esc(chart.colName)}</span>
-        <span class="csv-chart-type-badge">${chart.type}</span>
-        <button class="csv-chart-remove" data-chart-id="${chart.id}" title="Remove">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
-      <div class="csv-chart-body">${buildChartHTML(chart)}</div>
-    </div>
-  `).join('');
-  grid.querySelectorAll('.csv-chart-remove').forEach(btn =>
-    btn.addEventListener('click', () => {
-      csvCharts = csvCharts.filter(c => String(c.id) !== btn.dataset.chartId);
-      renderCSVCharts();
-    })
-  );
+  const preview = rows.slice(0, 100);
+  wrap.innerHTML = `<table class="dash-preview-table">
+    <thead><tr><th class="row-num">#</th>${headers.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead>
+    <tbody>${preview.map((r,i) => `<tr><td class="row-num">${i+1}</td>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody>
+  </table>${rows.length > 100 ? `<div class="dash-preview-more">Showing 100 of ${rows.length} rows</div>` : ''}`;
 }
 
-let csvChartType = 'bar';
-document.querySelectorAll('#csv-chart-type-opts .pill').forEach(el =>
-  el.addEventListener('click', () => {
-    document.querySelectorAll('#csv-chart-type-opts .pill').forEach(p=>p.classList.remove('active'));
-    el.classList.add('active'); csvChartType = el.dataset.val;
-  })
-);
+function updateSQLTableMeta() {
+  const meta = $('csv-meta'); if (!meta) return;
+  const { headers, rows } = sqlTableParsed;
+  meta.textContent = rows.length ? `${rows.length} rows · ${headers.length} columns parsed` : 'No data yet';
+}
 
-on('btn-add-chart', 'click', () => {
-  const sel = $('csv-col-select'); if (!sel || !csvParsed.headers.length) return;
-  const colIdx = parseInt(sel.value);
-  csvCharts.push({ id: Date.now(), colIdx, colName: csvParsed.headers[colIdx], type: csvChartType });
-  renderCSVCharts();
+on('btn-parse-sql-table', 'click', () => {
+  const raw = $('csv-input')?.value || '';
+  sqlTableParsed = parseSQLTable(raw);
+  updateSQLTableMeta();
+  renderSQLTablePreview();
+  if (sqlTableParsed.rows.length) showToast(`Parsed ${sqlTableParsed.rows.length} rows`);
+  else showToast('No rows found — check the pasted format');
 });
 
 on('btn-clear-csv', 'click', () => {
-  csvParsed = { headers: [], rows: [] };
-  csvCharts = [];
-  renderCSVMeta(); renderCSVColSelect(); renderCSVOverview(); renderCSVCharts();
-  const fi = $('csv-file-input'); if (fi) fi.value = '';
+  const i = $('csv-input'); if (i) i.value = '';
+  sqlTableParsed = { headers: [], rows: [] };
+  updateSQLTableMeta();
+  renderSQLTablePreview();
 });
 
-// CSV dropzone (click to browse + drag/drop)
-const csvDropzone = $('csv-dropzone');
-const csvFileInput = $('csv-file-input');
-if (csvDropzone && csvFileInput) {
-  csvDropzone.addEventListener('click', () => csvFileInput.click());
-  csvFileInput.addEventListener('change', () => { if (csvFileInput.files[0]) loadCSVFile(csvFileInput.files[0]); });
-  ['dragenter','dragover'].forEach(ev => csvDropzone.addEventListener(ev, e => { e.preventDefault(); csvDropzone.classList.add('drag-over'); }));
-  ['dragleave','dragend'].forEach(ev => csvDropzone.addEventListener(ev, e => { e.preventDefault(); csvDropzone.classList.remove('drag-over'); }));
-  csvDropzone.addEventListener('drop', e => {
-    e.preventDefault(); csvDropzone.classList.remove('drag-over');
-    const file = e.dataTransfer.files?.[0];
-    if (file) loadCSVFile(file);
-  });
+enableDropzone($('csv-input'));
+
+// ── Excel export (real .xls via SpreadsheetML HTML, opens natively in Excel) ──
+function xmlEscCSV(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-on('btn-export-csv-dashboard', 'click', () => {
-  if (!csvParsed.rows.length) { alert('Upload a CSV first!'); return; }
-  const { headers, rows } = csvParsed;
-  let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"></head><body>
-    <style>body{font-family:Calibri,Arial,sans-serif}table{border-collapse:collapse;width:100%;margin-bottom:24px}th{background:#4472C4;color:white;padding:6px 10px;border:1px solid #2F5496}td{padding:5px 10px;border:1px solid #D9D9D9}tr:nth-child(even) td{background:#EEF2FF}h2{color:#1F3864}</style>
-    <h2>Raw Data</h2><table><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table>`;
-  csvCharts.forEach(chart => {
-    const vals = colValues(chart.colIdx);
-    const freq = {}; vals.forEach(v=>{freq[v]=(freq[v]||0)+1;});
-    const sorted = Object.entries(freq).sort((a,b)=>b[1]-a[1]);
-    html += `<h2>${chart.colName} (${chart.type})</h2><table><tr><th>Value</th><th>Count</th><th>%</th></tr>${sorted.map(([v,c])=>`<tr><td>${v}</td><td>${c}</td><td>${((c/vals.length)*100).toFixed(1)}%</td></tr>`).join('')}</table>`;
-  });
-  html += '</body></html>';
+on('btn-download-excel', 'click', () => {
+  const { headers, rows } = sqlTableParsed;
+  if (!rows.length) { alert('Paste and parse a SQL table first!'); return; }
+  const sheetName = ($('csv-sheet-name')?.value || 'Query Result').trim() || 'Query Result';
+
+  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="UTF-8">
+<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>${xmlEscCSV(sheetName)}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+<style>
+  body{font-family:Calibri,Arial,sans-serif;font-size:11pt}
+  table{border-collapse:collapse;width:100%}
+  th{background:#4472C4;color:white;font-weight:bold;padding:6px 10px;border:1px solid #2F5496;text-align:left}
+  td{padding:5px 10px;border:1px solid #D9D9D9}
+  tr:nth-child(even) td{background:#EEF2FF}
+</style></head><body>
+<table>
+  <tr>${headers.map(h => `<th>${xmlEscCSV(h)}</th>`).join('')}</tr>
+  ${rows.map(r => `<tr>${r.map(c => {
+    const isNum = c !== '' && !isNaN(Number(c));
+    return `<td${isNum ? ' style="text-align:right"' : ''}>${xmlEscCSV(c)}</td>`;
+  }).join('')}</tr>`).join('')}
+</table>
+</body></html>`;
+
   const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-  Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `csv-dashboard-${new Date().toISOString().slice(0,10)}.xls` }).click();
-  showToast('Dashboard exported!');
+  const fname = sheetName.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_-]/g,'') + '_' + new Date().toISOString().slice(0,10) + '.xls';
+  Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: fname }).click();
+  showToast('Excel downloaded!');
 });
 
 // ── Init ──────────────────────────────────────────────────────────────────────
