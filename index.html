@@ -296,7 +296,7 @@
     <main class="page" id="page-csvdash">
       <div class="page-header">
         <h1>SQL to Excel</h1>
-        <p>Paste raw MySQL/PostgreSQL CLI output — get clean rows &amp; columns, download as Excel.</p>
+        <p>Paste one or more query outputs — queries are stripped, matching tables merge into one, download as Excel.</p>
       </div>
       <div class="page-body two-col">
 
@@ -308,14 +308,14 @@
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>Clear
               </button>
             </div>
-            <textarea id="csv-input" class="dropzone" spellcheck="false" style="min-height:280px" placeholder="+----+----------+-----+&#10;| id | name     | age |&#10;+----+----------+-----+&#10;| 1  | John Doe | 25  |&#10;| 2  | Jane Doe | 30  |&#10;+----+----------+-----+&#10;&#10;Paste the full output from your SQL client, or drag &amp; drop a .txt/.sql file"></textarea>
+            <textarea id="csv-input" class="dropzone" spellcheck="false" style="min-height:280px" placeholder="SELECT * FROM users;&#10;+----+----------+-----+&#10;| id | name     | age |&#10;+----+----------+-----+&#10;| 1  | John Doe | 25  |&#10;+----+----------+-----+&#10;&#10;SELECT * FROM orders WHERE user_id = 1;&#10;+----+---------+&#10;| id | total   |&#10;+----+---------+&#10;| 7  | 49.99   |&#10;+----+---------+&#10;&#10;Paste any number of query+result blocks, or drag &amp; drop a .txt/.sql file"></textarea>
             <div class="meta" id="csv-meta">No data yet</div>
           </section>
 
           <div class="btns" style="gap:8px">
             <button class="btn btn-primary" id="btn-parse-sql-table" style="flex:1;justify-content:center;padding:10px">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              Parse table
+              Parse table(s)
             </button>
           </div>
 
@@ -325,9 +325,16 @@
               <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
             <div class="cbody">
-              <div class="og" style="margin-bottom:0">
+              <div class="og">
                 <div class="og-title">Sheet / file name</div>
                 <input type="text" id="csv-sheet-name" class="minput" placeholder="e.g. Query Result" value="Query Result" />
+              </div>
+              <div class="og" style="margin-bottom:0">
+                <div class="og-title">Multiple blocks</div>
+                <label class="dash-check" style="width:fit-content">
+                  <input type="checkbox" id="csv-add-source-col" checked />
+                  Add "Source" column when merging matching tables
+                </label>
               </div>
             </div>
           </section>
@@ -341,11 +348,12 @@
               Download Excel
             </button>
           </div>
-          <section class="card">
+          <div id="csv-tables-preview"></div>
+          <section class="card" id="csv-preview-fallback-card">
             <div class="dash-preview-wrap" id="csv-preview-wrap" style="max-height:520px">
               <div class="dash-empty">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-                <p>Paste raw SQL output and click "Parse table" to preview</p>
+                <p>Paste raw SQL output and click "Parse table(s)" to preview</p>
               </div>
             </div>
           </section>

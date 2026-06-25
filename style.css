@@ -1802,3 +1802,14 @@ body.aurora .page-header { background: rgba(45,212,191,0.02); }
 @media (max-width: 580px) {
   .csv-overview-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ══════════════════════════════════════════
+   MULTI-TABLE SQL PREVIEW
+   ══════════════════════════════════════════ */
+
+#csv-tables-preview .dash-card {
+  padding: 1rem 1.1rem;
+}
+#csv-tables-preview .dash-preview-wrap {
+  border-radius: var(--rsm);
+}

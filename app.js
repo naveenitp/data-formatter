@@ -690,117 +690,248 @@ on('btn-clear-checker', 'click', () => {
 });
 on('btn-copy-formatted', 'click', () => copyText($('checker-output')?.value));
 
-// ── SQL Table → Excel ─────────────────────────────────────────────────────────
-let sqlTableParsed = { headers: [], rows: [] };
+// ── SQL Table(s) → Excel ───────────────────────────────────────────────────────
+// Supports pasting MULTIPLE query+result blocks in one go. Query text and noise
+// (footers, blank lines) are discarded; only table-shaped lines are kept. Blocks
+// with identical headers are merged into one table (with a Source column);
+// blocks with different headers become separate tables.
 
-// Parses MySQL/PostgreSQL CLI-style table output:
-// +----+----------+-----+
-// | id | name     | age |
-// +----+----------+-----+
-// | 1  | John Doe | 25  |
-// +----+----------+-----+
-// Also tolerates plain pipe-rows with no border lines, and strips a trailing
-// "N rows in set" / "(N rows)" summary line some clients print.
-function parseSQLTable(text) {
-  const allLines = text.split('\n').map(l => l.replace(/\r$/, ''));
-  const lines = allLines.filter(l => {
-    const t = l.trim();
-    if (t === '') return false;
-    if (/^\+?[-+]+\+?$/.test(t)) return false;               // +----+----+ or ----+----+ border/separator
-    if (/^\d+\s+rows?\s+in\s+set/i.test(t)) return false;     // MySQL footer
-    if (/^\(\d+\s+rows?\)/i.test(t)) return false;             // Postgres footer
-    return true;
-  });
-  if (!lines.length) return { headers: [], rows: [] };
+let sqlTableGroups = []; // [{ headers, rows, sources: [blockLabel,...], merged: bool }]
 
-  const splitRow = line => {
-    let t = line.trim();
-    if (t.startsWith('|')) t = t.slice(1);
-    if (t.endsWith('|')) t = t.slice(0, -1);
-    return t.split('|').map(c => c.trim());
+function isBorderLine(t) {
+  return /^\+?[-+]+\+?$/.test(t);
+}
+function isFooterLine(t) {
+  return /^\d+\s+rows?\s+in\s+set/i.test(t) || /^\(\d+\s+rows?\)/i.test(t);
+}
+function isTableLine(t) {
+  // A line is "table-shaped" if it's a border, or contains a pipe with content on both sides
+  if (isBorderLine(t)) return true;
+  if (t.includes('|')) return true;
+  return false;
+}
+function splitRow(line) {
+  let t = line.trim();
+  if (t.startsWith('|')) t = t.slice(1);
+  if (t.endsWith('|')) t = t.slice(0, -1);
+  return t.split('|').map(c => c.trim());
+}
+
+// Detect a PostgreSQL-style header followed by a "----+----+----" separator
+// (no pipes in the separator, but the header line itself uses pipes).
+function isPgSeparator(t) {
+  return /^[-]+(\+[-]+)+$/.test(t) || /^[-]+$/.test(t) && t.length > 2;
+}
+
+function extractTableBlocks(text) {
+  const rawLines = text.split('\n').map(l => l.replace(/\r$/, ''));
+  const blocks = [];
+  let current = [];
+
+  const flush = () => {
+    if (current.length) { blocks.push(current); current = []; }
   };
 
+  for (const line of rawLines) {
+    const t = line.trim();
+    if (t === '') { flush(); continue; }
+    if (isFooterLine(t)) { flush(); continue; }
+    if (isBorderLine(t) || isPgSeparator(t) || t.includes('|')) {
+      current.push(line);
+    } else {
+      // Non-table line (e.g. the SQL query itself, a notice, prompt) — discard, end current block
+      flush();
+    }
+  }
+  flush();
+  return blocks;
+}
+
+function parseBlockLines(blockLines) {
+  const lines = blockLines.filter(l => {
+    const t = l.trim();
+    if (isBorderLine(t)) return false;
+    if (isPgSeparator(t) && !t.includes('|')) return false;
+    return true;
+  });
+  if (!lines.length) return null;
   const allRows = lines.map(splitRow);
   const maxCols = Math.max(...allRows.map(r => r.length));
+  if (maxCols < 1) return null;
   const normalized = allRows.map(r => { while (r.length < maxCols) r.push(''); return r; });
-
   const headers = normalized[0];
   const rows = normalized.slice(1).filter(r => r.some(c => c !== ''));
+  if (!rows.length) return null;
   return { headers, rows };
 }
 
+function headerSignature(headers) {
+  return headers.map(h => h.toLowerCase().trim()).join('|||');
+}
+
+function parseMultiSQLTables(text) {
+  const blocks = extractTableBlocks(text);
+  const parsedBlocks = blocks
+    .map((b, i) => ({ parsed: parseBlockLines(b), label: `Query ${i + 1}` }))
+    .filter(b => b.parsed);
+
+  if (!parsedBlocks.length) return [];
+
+  // Group by header signature
+  const groups = new Map();
+  parsedBlocks.forEach(({ parsed, label }) => {
+    const sig = headerSignature(parsed.headers);
+    if (!groups.has(sig)) groups.set(sig, { headers: parsed.headers, rows: [], sources: [] });
+    const g = groups.get(sig);
+    parsed.rows.forEach(r => { g.rows.push(r); g.sources.push(label); });
+  });
+
+  // Re-label sources sequentially if only one block total per group (no need for "Query 1" everywhere)
+  const result = [];
+  let groupIdx = 1;
+  groups.forEach(g => {
+    const uniqueSources = [...new Set(g.sources)];
+    const merged = uniqueSources.length > 1;
+    result.push({
+      title: merged ? `Merged result (${uniqueSources.length} queries)` : uniqueSources[0],
+      headers: g.headers,
+      rows: g.rows,
+      sources: g.sources,
+      merged,
+    });
+    groupIdx++;
+  });
+  return result;
+}
+
 function renderSQLTablePreview() {
-  const wrap = $('csv-preview-wrap'); if (!wrap) return;
-  const { headers, rows } = sqlTableParsed;
-  if (!rows.length) {
-    wrap.innerHTML = `<div class="dash-empty">
+  const wrapFallback = $('csv-preview-fallback-card');
+  const container = $('csv-tables-preview');
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (!sqlTableGroups.length) {
+    if (wrapFallback) wrapFallback.style.display = '';
+    const wrap = $('csv-preview-wrap');
+    if (wrap) wrap.innerHTML = `<div class="dash-empty">
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-      <p>Paste raw SQL output and click "Parse table" to preview</p>
+      <p>Paste raw SQL output and click "Parse table(s)" to preview</p>
     </div>`;
     return;
   }
-  const preview = rows.slice(0, 100);
-  wrap.innerHTML = `<table class="dash-preview-table">
-    <thead><tr><th class="row-num">#</th>${headers.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead>
-    <tbody>${preview.map((r,i) => `<tr><td class="row-num">${i+1}</td>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody>
-  </table>${rows.length > 100 ? `<div class="dash-preview-more">Showing 100 of ${rows.length} rows</div>` : ''}`;
+  if (wrapFallback) wrapFallback.style.display = 'none';
+
+  const addSourceCol = $('csv-add-source-col')?.checked ?? true;
+
+  sqlTableGroups.forEach((group, gi) => {
+    const showSource = group.merged && addSourceCol;
+    const headers = showSource ? ['Source', ...group.headers] : group.headers;
+    const preview = group.rows.slice(0, 100);
+
+    const card = document.createElement('section');
+    card.className = 'card dash-card';
+    card.style.marginBottom = '12px';
+
+    const titleRow = document.createElement('div');
+    titleRow.className = 'card-row';
+    titleRow.style.marginBottom = '8px';
+    titleRow.innerHTML = `
+      <span class="card-label" style="margin-bottom:0">${esc(group.title)}</span>
+      <span class="stat">${group.rows.length} row${group.rows.length!==1?'s':''} · ${group.headers.length} col${group.headers.length!==1?'s':''}</span>
+    `;
+    card.appendChild(titleRow);
+
+    const tableWrap = document.createElement('div');
+    tableWrap.className = 'dash-preview-wrap';
+    tableWrap.style.maxHeight = '320px';
+    tableWrap.innerHTML = `<table class="dash-preview-table">
+      <thead><tr><th class="row-num">#</th>${headers.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead>
+      <tbody>${preview.map((r, i) => {
+        const cells = showSource ? [group.sources[i], ...r] : r;
+        return `<tr><td class="row-num">${i+1}</td>${cells.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`;
+      }).join('')}</tbody>
+    </table>${group.rows.length > 100 ? `<div class="dash-preview-more">Showing 100 of ${group.rows.length} rows</div>` : ''}`;
+    card.appendChild(tableWrap);
+
+    container.appendChild(card);
+  });
 }
 
 function updateSQLTableMeta() {
   const meta = $('csv-meta'); if (!meta) return;
-  const { headers, rows } = sqlTableParsed;
-  meta.textContent = rows.length ? `${rows.length} rows · ${headers.length} columns parsed` : 'No data yet';
+  if (!sqlTableGroups.length) { meta.textContent = 'No data yet'; return; }
+  const totalRows = sqlTableGroups.reduce((sum, g) => sum + g.rows.length, 0);
+  const tableWord = sqlTableGroups.length === 1 ? 'table' : 'tables';
+  meta.textContent = `${sqlTableGroups.length} ${tableWord} · ${totalRows} total rows parsed`;
 }
 
 on('btn-parse-sql-table', 'click', () => {
   const raw = $('csv-input')?.value || '';
-  sqlTableParsed = parseSQLTable(raw);
+  sqlTableGroups = parseMultiSQLTables(raw);
   updateSQLTableMeta();
   renderSQLTablePreview();
-  if (sqlTableParsed.rows.length) showToast(`Parsed ${sqlTableParsed.rows.length} rows`);
-  else showToast('No rows found — check the pasted format');
+  if (sqlTableGroups.length) {
+    const merged = sqlTableGroups.filter(g => g.merged).length;
+    showToast(merged ? `Parsed ${sqlTableGroups.length} table(s), ${merged} merged` : `Parsed ${sqlTableGroups.length} table(s)`);
+  } else {
+    showToast('No tables found — check the pasted format');
+  }
 });
+
+on('csv-add-source-col', 'change', renderSQLTablePreview);
 
 on('btn-clear-csv', 'click', () => {
   const i = $('csv-input'); if (i) i.value = '';
-  sqlTableParsed = { headers: [], rows: [] };
+  sqlTableGroups = [];
   updateSQLTableMeta();
   renderSQLTablePreview();
 });
 
 enableDropzone($('csv-input'));
 
-// ── Excel export (real .xls via SpreadsheetML HTML, opens natively in Excel) ──
+// ── Excel export (multi-sheet via SpreadsheetML HTML, opens natively in Excel) ─
 function xmlEscCSV(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 on('btn-download-excel', 'click', () => {
-  const { headers, rows } = sqlTableParsed;
-  if (!rows.length) { alert('Paste and parse a SQL table first!'); return; }
-  const sheetName = ($('csv-sheet-name')?.value || 'Query Result').trim() || 'Query Result';
+  if (!sqlTableGroups.length) { alert('Paste and parse SQL output first!'); return; }
+  const baseSheetName = ($('csv-sheet-name')?.value || 'Query Result').trim() || 'Query Result';
+  const addSourceCol = $('csv-add-source-col')?.checked ?? true;
+
+  const sheetBlock = (group, idx) => {
+    const showSource = group.merged && addSourceCol;
+    const headers = showSource ? ['Source', ...group.headers] : group.headers;
+    const rows = group.rows.map((r, i) => showSource ? [group.sources[i], ...r] : r);
+    const heading = sqlTableGroups.length > 1 ? `<h2>${xmlEscCSV(group.title)}</h2>` : '';
+    return `${idx > 0 ? '<div style="page-break-before:always"></div>' : ''}${heading}
+      <table>
+        <tr>${headers.map(h => `<th>${xmlEscCSV(h)}</th>`).join('')}</tr>
+        ${rows.map(r => `<tr>${r.map(c => {
+          const isNum = c !== '' && !isNaN(Number(c));
+          return `<td${isNum ? ' style="text-align:right"' : ''}>${xmlEscCSV(c)}</td>`;
+        }).join('')}</tr>`).join('')}
+      </table>`;
+  };
 
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
 <head><meta charset="UTF-8">
-<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>${xmlEscCSV(sheetName)}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets>
+${sqlTableGroups.map((g,i) => `<x:ExcelWorksheet><x:Name>${xmlEscCSV((g.title||baseSheetName).slice(0,31))}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet>`).join('')}
+</x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
 <style>
   body{font-family:Calibri,Arial,sans-serif;font-size:11pt}
-  table{border-collapse:collapse;width:100%}
+  table{border-collapse:collapse;width:100%;margin-bottom:20px}
   th{background:#4472C4;color:white;font-weight:bold;padding:6px 10px;border:1px solid #2F5496;text-align:left}
   td{padding:5px 10px;border:1px solid #D9D9D9}
   tr:nth-child(even) td{background:#EEF2FF}
+  h2{color:#1F3864;border-bottom:2px solid #4472C4;padding-bottom:4px}
 </style></head><body>
-<table>
-  <tr>${headers.map(h => `<th>${xmlEscCSV(h)}</th>`).join('')}</tr>
-  ${rows.map(r => `<tr>${r.map(c => {
-    const isNum = c !== '' && !isNaN(Number(c));
-    return `<td${isNum ? ' style="text-align:right"' : ''}>${xmlEscCSV(c)}</td>`;
-  }).join('')}</tr>`).join('')}
-</table>
+${sqlTableGroups.map(sheetBlock).join('')}
 </body></html>`;
 
   const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-  const fname = sheetName.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_-]/g,'') + '_' + new Date().toISOString().slice(0,10) + '.xls';
+  const fname = baseSheetName.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_-]/g,'') + '_' + new Date().toISOString().slice(0,10) + '.xls';
   Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: fname }).click();
   showToast('Excel downloaded!');
 });
