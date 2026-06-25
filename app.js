@@ -907,7 +907,6 @@ function downloadTableScreenshot(group, addSourceCol) {
 
   // ── Style constants ──
   const PADDING = 24;
-  const TITLE_H = 44;
   const ROW_H = 36;
   const HEADER_H = 40;
   const CELL_PAD_X = 14;
@@ -937,7 +936,7 @@ function downloadTableScreenshot(group, addSourceCol) {
   const tableH = HEADER_H + visibleRows.length * ROW_H;
   const footerH = rows.length > 200 ? 28 : 0;
   const canvasW = tableW + PADDING * 2;
-  const canvasH = TITLE_H + tableH + PADDING * 2 + footerH + 30; // +30 for watermark
+  const canvasH = tableH + PADDING * 2 + footerH;
 
   const dpr = window.devicePixelRatio || 1;
   const canvas = document.createElement('canvas');
@@ -950,18 +949,8 @@ function downloadTableScreenshot(group, addSourceCol) {
   ctx.fillStyle = '#0e0e10';
   ctx.fillRect(0, 0, canvasW, canvasH);
 
-  // ── Title ──
-  ctx.fillStyle = '#f0f0f2';
-  ctx.font = '700 17px -apple-system, Segoe UI, Roboto, sans-serif';
   ctx.textBaseline = 'middle';
-  ctx.fillText(group.title, PADDING, PADDING + TITLE_H / 2);
-  ctx.fillStyle = '#7c6af7';
-  ctx.font = '600 12px -apple-system, Segoe UI, Roboto, sans-serif';
-  const rowLabel = `${rows.length} row${rows.length!==1?'s':''} · ${headers.length} col${headers.length!==1?'s':''}`;
-  const rowLabelW = ctx.measureText(rowLabel).width;
-  ctx.fillText(rowLabel, canvasW - PADDING - rowLabelW, PADDING + TITLE_H / 2);
-
-  let y = PADDING + TITLE_H;
+  let y = PADDING;
 
   // ── Header row ──
   ctx.fillStyle = '#4c3fc7';
@@ -999,26 +988,19 @@ function downloadTableScreenshot(group, addSourceCol) {
   headers.forEach((_, i) => {
     x += colWidths[i];
     if (i < headers.length - 1) {
-      ctx.beginPath(); ctx.moveTo(x, PADDING + TITLE_H); ctx.lineTo(x, PADDING + TITLE_H + tableH); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, PADDING); ctx.lineTo(x, PADDING + tableH); ctx.stroke();
     }
   });
   // outer border
   ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-  ctx.strokeRect(PADDING, PADDING + TITLE_H, tableW, tableH);
+  ctx.strokeRect(PADDING, PADDING, tableW, tableH);
 
   if (footerH) {
     ctx.fillStyle = '#888892';
     ctx.font = '12px -apple-system, Segoe UI, Roboto, sans-serif';
     ctx.textAlign = 'left';
     ctx.fillText(`Showing 200 of ${rows.length} rows`, PADDING, y + 16);
-    y += footerH;
   }
-
-  // ── Watermark ──
-  ctx.fillStyle = '#55555f';
-  ctx.font = '11px -apple-system, Segoe UI, Roboto, sans-serif';
-  ctx.textAlign = 'right';
-  ctx.fillText('Generated with DataFmt', canvasW - PADDING, canvasH - 14);
 
   // ── Download ──
   canvas.toBlob(blob => {
