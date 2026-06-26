@@ -38,7 +38,7 @@
       </button>
       <button class="nav-item" data-page="library">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-        <span>Library</span>
+        <span>My queries</span>
       </button>
       <button class="nav-item" data-page="favorites">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -57,15 +57,15 @@
             <span class="swatch-preview swatch-glass"></span>
             <span class="swatch-name">Glass</span>
           </button>
-          <button class="theme-swatch" data-theme="aurora" title="Aurora">
-            <span class="swatch-preview swatch-aurora"></span>
-            <span class="swatch-name">Aurora</span>
+          <button class="theme-swatch" data-theme="mono" title="Mono">
+            <span class="swatch-preview swatch-mono"></span>
+            <span class="swatch-name">Mono</span>
           </button>
         </div>
       </div>
-      <a href="https://google.com/" target="_blank" rel="noopener">
+      <a href="https://github.com/" target="_blank" rel="noopener">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.167 6.839 9.49.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.004.07 1.532 1.032 1.532 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
-        <span>NAVEEN</span>
+        <span>GitHub</span>
       </a>
     </div>
   </aside>
@@ -361,21 +361,19 @@
       </div>
     </main>
 
-    <!-- ══ Page: Library ══ -->
+    <!-- ══ Page: My Queries ══ -->
     <main class="page" id="page-library">
       <div class="page-header">
-        <h1>Library</h1>
-        <p>Saved SQL queries and Linux commands — click any snippet to copy instantly.</p>
+        <h1>My queries</h1>
+        <p>Your daily-use queries — click any one to copy instantly.</p>
       </div>
       <div class="page-body one-col">
         <div class="lib-toolbar">
-          <input type="text" id="lib-search" class="lib-search" placeholder="Search snippets…" />
+          <input type="text" id="lib-search" class="lib-search" placeholder="Search your queries…" />
           <div class="btns">
             <button class="btn btn-primary" id="btn-lib-add">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add entry
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add query
             </button>
-            <button class="btn" id="btn-lib-expand">Expand all</button>
-            <button class="btn" id="btn-lib-collapse">Collapse all</button>
           </div>
         </div>
         <div id="library-body"></div>
@@ -386,7 +384,7 @@
     <main class="page" id="page-favorites">
       <div class="page-header">
         <h1>Favorites</h1>
-        <p>Your starred library entries, all in one place.</p>
+        <p>Your starred queries, all in one place.</p>
       </div>
       <div class="page-body one-col">
         <div class="lib-toolbar">
@@ -400,45 +398,31 @@
 
   <div id="toast">Copied!</div>
 
-  <!-- Add to Library modal -->
+  <!-- Add/Edit query modal -->
   <div id="modal-overlay" class="modal-overlay hidden">
     <div class="modal">
       <div class="modal-header">
-        <span class="modal-title">Add library entry</span>
+        <span class="modal-title">Add query</span>
         <button class="modal-close" id="btn-modal-close">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
       <div class="modal-body">
         <div class="mfield">
-          <label class="mlabel">Label <span class="mreq">*</span></label>
-          <input type="text" id="m-label" class="minput" placeholder="e.g. Get active connections" />
+          <label class="mlabel">Name <span class="mreq">*</span></label>
+          <input type="text" id="m-label" class="minput" placeholder="e.g. Daily active users" />
         </div>
         <div class="mfield">
-          <label class="mlabel">Category</label>
-          <div class="pills" id="m-category-pills" style="margin-top:6px">
-            <button class="pill active" data-val="custom">Custom</button>
-            <button class="pill" data-val="sql">SQL</button>
-            <button class="pill" data-val="linux">Linux</button>
-            <button class="pill" data-val="git">Git</button>
-            <button class="pill" data-val="docker">Docker</button>
-          </div>
+          <label class="mlabel">Query <span class="mreq">*</span></label>
+          <textarea id="m-code" class="minput" style="min-height:140px;font-family:var(--mono);font-size:0.8rem" placeholder="SELECT * FROM ..."></textarea>
         </div>
-        <div class="mfield">
-          <label class="mlabel">Description <span class="mopt">(optional)</span></label>
-          <input type="text" id="m-desc" class="minput" placeholder="Short description" />
-        </div>
-        <div class="mfield">
-          <label class="mlabel">Code / Query <span class="mreq">*</span></label>
-          <textarea id="m-code" class="minput" style="min-height:90px;font-family:var(--mono);font-size:0.8rem" placeholder="SELECT * FROM ..."></textarea>
-        </div>
-        <div id="m-error" class="m-error hidden">Label and Code are required.</div>
+        <div id="m-error" class="m-error hidden">Name and query are required.</div>
       </div>
       <div class="modal-footer">
         <button class="btn" id="btn-modal-cancel">Cancel</button>
         <button class="btn btn-primary" id="btn-modal-save">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-          <span id="btn-modal-save-label">Save entry</span>
+          <span id="btn-modal-save-label">Save query</span>
         </button>
       </div>
     </div>
@@ -464,7 +448,7 @@
     </button>
     <button class="mnav-item" data-page="library">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-      <span>Library</span>
+      <span>Queries</span>
     </button>
     <button class="mnav-item" data-page="favorites">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>

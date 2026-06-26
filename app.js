@@ -36,7 +36,7 @@ setInterval(updateClock, 1000);
 
 // ── Theme picker ──────────────────────────────────────────────────────────────
 const THEME_KEY = 'datafmt_theme';
-const THEME_CLASSES = ['glass', 'aurora']; // 'normal' = no class
+const THEME_CLASSES = ['glass', 'mono']; // 'normal' = no class
 let currentTheme = localStorage.getItem(THEME_KEY) || 'normal';
 
 function applyTheme() {
@@ -266,14 +266,14 @@ on('btn-clear-sql-input','click', () => {
   if(i)i.value=''; if(o)o.value=''; if(s)s.textContent=''; if(m)m.textContent='0 items detected';
 });
 
-// ── Library ───────────────────────────────────────────────────────────────────
+// ── My Queries ────────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'datafmt_custom_entries';
 const FAV_KEY = 'datafmt_favorites';
 function loadCustom() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch { return []; } }
 function saveCustom(e) { localStorage.setItem(STORAGE_KEY, JSON.stringify(e)); }
 function loadFavs() { try { return JSON.parse(localStorage.getItem(FAV_KEY)||'[]'); } catch { return []; } }
 function saveFavs(f) { localStorage.setItem(FAV_KEY, JSON.stringify(f)); }
-function favKeyFor(item) { return (item.source||'') + '::' + item.label; }
+function favKeyFor(item) { return item.id || item.label; }
 function isFav(item) { return loadFavs().includes(favKeyFor(item)); }
 function toggleFav(item) {
   const key = favKeyFor(item);
@@ -286,112 +286,74 @@ function starSVG(filled) {
   return `<svg width="14" height="14" viewBox="0 0 24 24" fill="${filled?'currentColor':'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
 }
 
-// Shared action-button row: Copy (always), Edit (custom only), Star, Delete (custom only)
-function buildItemActions({ isCustom, isStarred }) {
+// Shared action-button row: Copy, Edit, Star, Delete
+function buildItemActions({ isStarred }) {
   return `
     <div class="lib-item-actions">
       <button class="lib-act-btn lib-act-copy" title="Copy to clipboard">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
         <span>Copy</span>
       </button>
-      ${isCustom ? `<button class="lib-act-btn lib-act-edit" title="Edit entry">
+      <button class="lib-act-btn lib-act-edit" title="Edit query">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         <span>Edit</span>
-      </button>` : ''}
+      </button>
       <button class="lib-act-btn lib-act-star${isStarred?' active':''}" title="${isStarred?'Remove favorite':'Add to favorites'}">
         ${starSVG(isStarred)}
       </button>
-      ${isCustom ? `<button class="lib-act-btn lib-act-delete" title="Delete entry">
+      <button class="lib-act-btn lib-act-delete" title="Delete query">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
-      </button>` : ''}
+      </button>
     </div>`;
 }
 
-// Collect every library item (custom + built-in) with a stable source/category tag
+// Flat list of every saved query (for favorites lookups, widget, etc.)
 function getAllLibraryItems() {
-  const out = [];
-  loadCustom().forEach(e => out.push({ label: e.label, desc: e.desc, code: e.code, source: 'custom', category: e.category||'custom', id: e.id }));
-  (LIBRARY||[]).forEach(section => section.items.forEach(it =>
-    out.push({ label: it.label, desc: it.desc||'', code: it.code, source: section.id||section.title, category: section.icon })
-  ));
-  return out;
+  return loadCustom().map(e => ({ label: e.label, code: e.code, id: e.id }));
 }
 
 function buildLibrary(filter) {
   const body = $('library-body'); if (!body) return;
   body.innerHTML = '';
   filter = (filter||'').toLowerCase().trim();
-  const custom = loadCustom();
-  const custF = filter ? custom.filter(it => (it.label+' '+(it.desc||'')+' '+it.code).toLowerCase().includes(filter)) : custom;
+  const all = loadCustom();
+  const items = filter ? all.filter(it => (it.label+' '+it.code).toLowerCase().includes(filter)) : all;
 
-  const makeSec = (badge, badgeClass, title, items, isEmpty) => {
-    const sec = document.createElement('div');
-    sec.className = 'lib-section open';
-    const hdr = document.createElement('button');
-    hdr.className = 'lib-hdr';
-    hdr.innerHTML = `<span class="lib-badge badge-${badgeClass}">${badge}</span><span class="lib-title">${esc(title)}</span><span class="lib-count">${items.length}</span><svg class="lib-chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
-    hdr.addEventListener('click', () => sec.classList.toggle('open'));
-    const bdy = document.createElement('div'); bdy.className = 'lib-body';
-    if (isEmpty) {
-      bdy.innerHTML = '<div style="padding:12px 1rem;font-size:0.78rem;color:var(--text3)">No entries yet — click <strong style="color:var(--text2)">+ Add entry</strong>.</div>';
-    }
-    sec.appendChild(hdr); sec.appendChild(bdy); body.appendChild(sec);
-    return bdy;
-  };
-
-  // Custom section
-  if (!filter || custF.length) {
-    const bdy = makeSec('custom','custom','My entries', custF, custF.length===0);
-    custF.forEach(item => {
-      const favItem = { label: item.label, source: 'custom' };
-      const filled = isFav(favItem);
-      const row = document.createElement('div'); row.className = 'lib-item';
-      row.innerHTML = `<div class="lib-item-info"><div class="lib-item-lbl">${esc(item.label)} <span class="lib-badge badge-${item.category||'custom'}" style="font-size:.55rem">${item.category||'custom'}</span></div>${item.desc?`<div class="lib-item-desc">${esc(item.desc)}</div>`:''}<pre class="lib-item-code">${esc(item.code)}</pre></div>${buildItemActions({isCustom:true, isStarred:filled})}`;
-      row.querySelector('.lib-act-copy').addEventListener('click', e => { e.stopPropagation(); copyText(item.code); row.classList.add('flash'); setTimeout(()=>row.classList.remove('flash'),1000); });
-      row.querySelector('.lib-act-edit').addEventListener('click', e => { e.stopPropagation(); openModal(item.code, item); });
-      row.querySelector('.lib-act-star').addEventListener('click', e => {
-        e.stopPropagation(); toggleFav(favItem);
-        const btn = e.currentTarget; const nowFilled = isFav(favItem);
-        btn.classList.toggle('active', nowFilled); btn.innerHTML = starSVG(nowFilled);
-      });
-      row.querySelector('.lib-act-delete').addEventListener('click', e => {
-        e.stopPropagation();
-        if (confirm(`Delete "${item.label}"?`)) { saveCustom(loadCustom().filter(x=>x.id!==item.id)); buildLibrary($('lib-search')?.value); buildWidget(); }
-      });
-      bdy.appendChild(row);
-    });
+  if (!items.length) {
+    body.innerHTML = filter
+      ? `<div class="dash-empty"><p>No queries match "${esc(filter)}"</p></div>`
+      : `<div class="dash-empty">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <p>No saved queries yet — click <strong style="color:var(--text2)">+ Add query</strong> to save your first one.</p>
+        </div>`;
+    return;
   }
 
-  // Built-in sections
-  (LIBRARY||[]).forEach(section => {
-    const items = filter ? section.items.filter(it=>(it.label+' '+(it.desc||'')+' '+it.code).toLowerCase().includes(filter)) : section.items;
-    if (filter && !items.length) return;
-    const sec = document.createElement('div');
-    sec.className = 'lib-section' + ((section.open||filter)?' open':'');
-    const hdr = document.createElement('button'); hdr.className = 'lib-hdr';
-    hdr.innerHTML = `<span class="lib-badge badge-${section.icon}">${section.icon}</span><span class="lib-title">${esc(section.title)}</span><span class="lib-count">${items.length}</span><svg class="lib-chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
-    hdr.addEventListener('click', () => sec.classList.toggle('open'));
-    const bdy = document.createElement('div'); bdy.className = 'lib-body';
-    items.forEach(item => {
-      const favItem = { label: item.label, source: section.id||section.title };
-      const filled = isFav(favItem);
-      const row = document.createElement('div'); row.className = 'lib-item';
-      row.innerHTML = `<div class="lib-item-info"><div class="lib-item-lbl">${esc(item.label)}</div>${item.desc?`<div class="lib-item-desc">${esc(item.desc)}</div>`:''}<pre class="lib-item-code">${esc(item.code)}</pre></div>${buildItemActions({isCustom:false, isStarred:filled})}`;
-      row.querySelector('.lib-act-copy').addEventListener('click', e => { e.stopPropagation(); copyText(item.code); row.classList.add('flash'); setTimeout(()=>row.classList.remove('flash'),1000); });
-      row.querySelector('.lib-act-star').addEventListener('click', e => {
-        e.stopPropagation(); toggleFav(favItem);
-        const btn = e.currentTarget; const nowFilled = isFav(favItem);
-        btn.classList.toggle('active', nowFilled); btn.innerHTML = starSVG(nowFilled);
-      });
-      bdy.appendChild(row);
+  items.forEach((item, idx) => {
+    const filled = isFav(item);
+    const row = document.createElement('div');
+    row.className = 'lib-item lib-item-anim';
+    row.style.animationDelay = (idx * 30) + 'ms';
+    row.innerHTML = `<div class="lib-item-info"><div class="lib-item-lbl">${esc(item.label)}</div><pre class="lib-item-code">${esc(item.code)}</pre></div>${buildItemActions({isStarred:filled})}`;
+    row.querySelector('.lib-act-copy').addEventListener('click', e => { e.stopPropagation(); copyText(item.code); row.classList.add('flash'); setTimeout(()=>row.classList.remove('flash'),1000); });
+    row.querySelector('.lib-act-edit').addEventListener('click', e => { e.stopPropagation(); openModal(item.code, item); });
+    row.querySelector('.lib-act-star').addEventListener('click', e => {
+      e.stopPropagation(); toggleFav(item);
+      const btn = e.currentTarget; const nowFilled = isFav(item);
+      btn.classList.toggle('active', nowFilled); btn.innerHTML = starSVG(nowFilled);
     });
-    sec.appendChild(hdr); sec.appendChild(bdy); body.appendChild(sec);
+    row.querySelector('.lib-act-delete').addEventListener('click', e => {
+      e.stopPropagation();
+      if (confirm(`Delete "${item.label}"?`)) {
+        row.classList.add('removing');
+        setTimeout(() => { saveCustom(loadCustom().filter(x=>x.id!==item.id)); buildLibrary($('lib-search')?.value); buildWidget(); }, 180);
+      }
+    });
+    body.appendChild(row);
   });
 }
 
-on('lib-search',    'input',  e => buildLibrary(e.target.value));
-on('btn-lib-expand','click',  () => document.querySelectorAll('.lib-section').forEach(s=>s.classList.add('open')));
-on('btn-lib-collapse','click',() => document.querySelectorAll('.lib-section').forEach(s=>s.classList.remove('open')));
+on('lib-search', 'input', e => buildLibrary(e.target.value));
 
 // ── Favorites page ─────────────────────────────────────────────────────────────
 function buildFavorites(filter) {
@@ -399,38 +361,38 @@ function buildFavorites(filter) {
   body.innerHTML = '';
   filter = (filter||'').toLowerCase().trim();
   const favs = loadFavs();
-  const all = getAllLibraryItems();
+  const all = loadCustom();
   let favItems = all.filter(it => favs.includes(favKeyFor(it)));
-  if (filter) favItems = favItems.filter(it => (it.label+' '+(it.desc||'')+' '+it.code).toLowerCase().includes(filter));
+  if (filter) favItems = favItems.filter(it => (it.label+' '+it.code).toLowerCase().includes(filter));
 
   if (!favItems.length) {
     body.innerHTML = `<div class="dash-empty">
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-      <p>No favorites yet — star any item in the Library to see it here.</p>
+      <p>No favorites yet — star any query in My Queries to see it here.</p>
     </div>`;
     return;
   }
 
-  favItems.forEach(item => {
-    const isCustom = item.source === 'custom';
-    const row = document.createElement('div'); row.className = 'lib-item fav-row';
-    row.innerHTML = `<div class="lib-item-info"><div class="lib-item-lbl">${esc(item.label)} <span class="lib-badge badge-${item.category||'custom'}" style="font-size:.55rem">${item.category||'custom'}</span></div>${item.desc?`<div class="lib-item-desc">${esc(item.desc)}</div>`:''}<pre class="lib-item-code">${esc(item.code)}</pre></div>${buildItemActions({isCustom, isStarred:true})}`;
+  favItems.forEach((item, idx) => {
+    const row = document.createElement('div');
+    row.className = 'lib-item fav-row lib-item-anim';
+    row.style.animationDelay = (idx * 30) + 'ms';
+    row.innerHTML = `<div class="lib-item-info"><div class="lib-item-lbl">${esc(item.label)}</div><pre class="lib-item-code">${esc(item.code)}</pre></div>${buildItemActions({isStarred:true})}`;
     row.querySelector('.lib-act-copy').addEventListener('click', e => { e.stopPropagation(); copyText(item.code); row.classList.add('flash'); setTimeout(()=>row.classList.remove('flash'),1000); });
-    const editBtn = row.querySelector('.lib-act-edit');
-    if (editBtn) editBtn.addEventListener('click', e => { e.stopPropagation(); openModal(item.code, item); });
+    row.querySelector('.lib-act-edit').addEventListener('click', e => { e.stopPropagation(); openModal(item.code, item); });
     row.querySelector('.lib-act-star').addEventListener('click', e => {
       e.stopPropagation();
       toggleFav(item);
-      row.remove();
-      if (!$('favorites-body').children.length) buildFavorites($('fav-search')?.value);
+      row.classList.add('removing');
+      setTimeout(() => { row.remove(); if (!$('favorites-body').children.length) buildFavorites($('fav-search')?.value); }, 180);
     });
-    const delBtn = row.querySelector('.lib-act-delete');
-    if (delBtn) delBtn.addEventListener('click', e => {
+    row.querySelector('.lib-act-delete').addEventListener('click', e => {
       e.stopPropagation();
       if (confirm(`Delete "${item.label}"?`)) {
         saveCustom(loadCustom().filter(x=>x.id!==item.id));
         toggleFav(item);
-        row.remove();
+        row.classList.add('removing');
+        setTimeout(() => row.remove(), 180);
       }
     });
     body.appendChild(row);
@@ -438,37 +400,27 @@ function buildFavorites(filter) {
 }
 on('fav-search', 'input', e => buildFavorites(e.target.value));
 
-// ── Library modal ─────────────────────────────────────────────────────────────
-let modalCat = 'custom';
-let editingEntryId = null; // null = adding new, otherwise editing this custom entry's id
+// ── Add/Edit query modal ───────────────────────────────────────────────────────
+let editingEntryId = null; // null = adding new, otherwise editing this entry's id
 
 function openModal(code, existingItem) {
   const o=$('modal-overlay'); if(!o) return;
   editingEntryId = existingItem?.id || null;
 
   $('m-label').value = existingItem?.label || '';
-  $('m-desc').value = existingItem?.desc || '';
   const mc=$('m-code'); if(mc) mc.value = code || existingItem?.code || '';
   $('m-error')?.classList.add('hidden');
-  modalCat = existingItem?.category || 'custom';
-  document.querySelectorAll('#m-category-pills .pill').forEach(p=>p.classList.toggle('active',p.dataset.val===modalCat));
 
   const titleEl = document.querySelector('.modal-title');
-  if (titleEl) titleEl.textContent = editingEntryId ? 'Edit library entry' : 'Add library entry';
+  if (titleEl) titleEl.textContent = editingEntryId ? 'Edit query' : 'Add query';
   const saveLabel = $('btn-modal-save-label');
-  if (saveLabel) saveLabel.textContent = editingEntryId ? 'Save changes' : 'Save entry';
+  if (saveLabel) saveLabel.textContent = editingEntryId ? 'Save changes' : 'Save query';
 
   o.classList.remove('hidden');
   setTimeout(()=>$('m-label')?.focus(),50);
 }
 function closeModal() { $('modal-overlay')?.classList.add('hidden'); editingEntryId = null; }
 
-document.querySelectorAll('#m-category-pills .pill').forEach(p =>
-  p.addEventListener('click', () => {
-    document.querySelectorAll('#m-category-pills .pill').forEach(x=>x.classList.remove('active'));
-    p.classList.add('active'); modalCat=p.dataset.val;
-  })
-);
 on('btn-lib-add',    'click', () => openModal());
 on('btn-modal-close','click', closeModal);
 on('btn-modal-cancel','click',closeModal);
@@ -479,18 +431,17 @@ on('btn-modal-save','click', () => {
   const label=$('m-label')?.value.trim(), code=$('m-code')?.value.trim();
   if (!label||!code) { $('m-error')?.classList.remove('hidden'); return; }
   $('m-error')?.classList.add('hidden');
-  const desc = $('m-desc')?.value.trim()||'';
   const entries = loadCustom();
 
   if (editingEntryId) {
     const idx = entries.findIndex(e => e.id === editingEntryId);
-    if (idx !== -1) entries[idx] = { ...entries[idx], label, desc, code, category: modalCat };
+    if (idx !== -1) entries[idx] = { ...entries[idx], label, code };
     saveCustom(entries);
-    showToast('Entry updated!');
+    showToast('Query updated!');
   } else {
-    entries.unshift({ id:'custom_'+Date.now(), label, desc, code, category:modalCat });
+    entries.unshift({ id:'q_'+Date.now(), label, code });
     saveCustom(entries);
-    showToast('Entry saved!');
+    showToast('Query saved!');
   }
 
   closeModal();
@@ -498,37 +449,29 @@ on('btn-modal-save','click', () => {
   buildLibrary(); buildWidget();
 });
 
-// ── Library widget (SQL page) ─────────────────────────────────────────────────
+// ── My Queries widget (SQL page sidebar) ────────────────────────────────────────
 function buildWidget(filter) {
   const body=$('widget-body'); if(!body) return;
   body.innerHTML='';
   filter=(filter||'').toLowerCase().trim();
-  const custom=loadCustom();
-  const allSections=[];
-  if(custom.length) allSections.push({ icon:'custom', title:'My entries', items:custom.map(e=>({label:e.label,desc:e.desc,code:e.code,isSQL:e.category==='sql'})) });
-  (LIBRARY||[]).forEach(s=>allSections.push({ icon:s.icon, title:s.title, items:s.items.map(it=>({label:it.label,desc:it.desc||'',code:it.code,isSQL:s.icon==='sql'})) }));
+  const all = loadCustom();
+  const items = filter ? all.filter(it => (it.label+' '+it.code).toLowerCase().includes(filter)) : all;
 
-  allSections.forEach((section,si)=>{
-    const items=filter?section.items.filter(it=>(it.label+' '+it.code+' '+(it.desc||'')).toLowerCase().includes(filter)):section.items;
-    if(!items.length) return;
-    const sec=document.createElement('div'); sec.className='ws-section'+(si===0?' open':'');
-    const hdr=document.createElement('button'); hdr.className='ws-hdr';
-    hdr.innerHTML=`<span class="ws-hdr-badge badge-${section.icon}">${section.icon}</span><span class="ws-title">${esc(section.title)}</span><span class="ws-count">${items.length}</span><svg class="ws-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
-    hdr.addEventListener('click',()=>sec.classList.toggle('open'));
-    const itemsEl=document.createElement('div'); itemsEl.className='ws-items';
-    items.forEach(item=>{
-      const row=document.createElement('div'); row.className='ws-item';
-      const preview=(item.code.split('\n').find(l=>l.trim())||item.code);
-      row.innerHTML=`<div class="ws-item-info"><div class="ws-item-label" title="${esc(item.label)}">${esc(item.label)}</div><div class="ws-item-preview">${esc(preview.length>50?preview.slice(0,49)+'…':preview)}</div></div>${item.isSQL?`<button class="ws-load-btn" title="Load into template"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></button>`:''}<button class="ws-copy-btn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button>`;
-      row.querySelector('.ws-copy-btn').addEventListener('click',e=>{e.stopPropagation();copyText(item.code);row.classList.add('flash');setTimeout(()=>row.classList.remove('flash'),900);});
-      const lb=row.querySelector('.ws-load-btn');
-      if(lb) lb.addEventListener('click',e=>{e.stopPropagation();const t=$('sql-template');if(t){t.value=item.code;buildQuery();t.style.borderColor='var(--accent)';setTimeout(()=>t.style.borderColor='',800);}});
-      row.addEventListener('click',()=>{copyText(item.code);row.classList.add('flash');setTimeout(()=>row.classList.remove('flash'),900);});
-      itemsEl.appendChild(row);
-    });
-    sec.appendChild(hdr); sec.appendChild(itemsEl); body.appendChild(sec);
+  if (!items.length) {
+    body.innerHTML = '<div style="padding:1rem;font-size:0.78rem;color:var(--text3);text-align:center">No saved queries yet</div>';
+    return;
+  }
+
+  items.forEach((item, idx) => {
+    const row=document.createElement('div'); row.className='ws-item ws-item-anim';
+    row.style.animationDelay = (idx * 25) + 'ms';
+    const preview=(item.code.split('\n').find(l=>l.trim())||item.code);
+    row.innerHTML=`<div class="ws-item-info"><div class="ws-item-label" title="${esc(item.label)}">${esc(item.label)}</div><div class="ws-item-preview">${esc(preview.length>50?preview.slice(0,49)+'…':preview)}</div></div><button class="ws-load-btn" title="Load into template"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></button><button class="ws-copy-btn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button>`;
+    row.querySelector('.ws-copy-btn').addEventListener('click',e=>{e.stopPropagation();copyText(item.code);row.classList.add('flash');setTimeout(()=>row.classList.remove('flash'),900);});
+    row.querySelector('.ws-load-btn').addEventListener('click',e=>{e.stopPropagation();const t=$('sql-template');if(t){t.value=item.code;buildQuery();t.style.borderColor='var(--accent)';setTimeout(()=>t.style.borderColor='',800);}});
+    row.addEventListener('click',()=>{copyText(item.code);row.classList.add('flash');setTimeout(()=>row.classList.remove('flash'),900);});
+    body.appendChild(row);
   });
-  if(!body.children.length) body.innerHTML='<div style="padding:1rem;font-size:0.78rem;color:var(--text3);text-align:center">No results</div>';
 }
 on('widget-search','input',e=>buildWidget(e.target.value));
 
