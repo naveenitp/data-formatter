@@ -34,27 +34,106 @@ function updateClock() {
 updateClock();
 setInterval(updateClock, 1000);
 
+// ── Generic custom dropdown helper ─────────────────────────────────────────────
+function setupCustomSelect({ wrapId, triggerId, menuId, dataAttr, storageKey, defaultVal, onSelect, labelEl, swatchEl }) {
+  const wrap = $(wrapId), trigger = $(triggerId), menu = $(menuId);
+  if (!wrap || !trigger || !menu) return null;
+
+  let current = localStorage.getItem(storageKey) || defaultVal;
+
+  function render() {
+    const opts = menu.querySelectorAll('.custom-select-opt');
+    opts.forEach(opt => opt.classList.toggle('active', opt.getAttribute(dataAttr) === current));
+    const activeOpt = [...opts].find(o => o.getAttribute(dataAttr) === current);
+    if (activeOpt && labelEl) labelEl.textContent = activeOpt.textContent.trim();
+    if (activeOpt && swatchEl) {
+      const swatch = activeOpt.querySelector('.swatch-preview');
+      if (swatch) swatchEl.className = swatch.className;
+    }
+  }
+
+  trigger.addEventListener('click', e => {
+    e.stopPropagation();
+    document.querySelectorAll('.custom-select.open').forEach(s => { if (s !== wrap) s.classList.remove('open'); });
+    wrap.classList.toggle('open');
+  });
+
+  menu.querySelectorAll('.custom-select-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      current = opt.getAttribute(dataAttr);
+      localStorage.setItem(storageKey, current);
+      wrap.classList.remove('open');
+      render();
+      onSelect(current);
+    });
+  });
+
+  document.addEventListener('click', e => { if (!wrap.contains(e.target)) wrap.classList.remove('open'); });
+
+  render();
+  onSelect(current);
+  return { get: () => current };
+}
+
 // ── Theme picker ──────────────────────────────────────────────────────────────
 const THEME_KEY = 'datafmt_theme';
-const THEME_CLASSES = ['glass', 'mono', 'monolight']; // 'normal' = no class
-let currentTheme = localStorage.getItem(THEME_KEY) || 'normal';
+const THEME_CLASSES = ['glass', 'monolight', 'monodark', 'paper']; // 'normal' = no class
 
-function applyTheme() {
-  THEME_CLASSES.forEach(c => document.body.classList.remove(c));
-  if (THEME_CLASSES.includes(currentTheme)) document.body.classList.add(currentTheme);
-  document.querySelectorAll('.theme-swatch').forEach(sw =>
-    sw.classList.toggle('active', sw.dataset.theme === currentTheme)
-  );
-}
-applyTheme();
+setupCustomSelect({
+  wrapId: 'theme-select-wrap',
+  triggerId: 'theme-select-trigger',
+  menuId: 'theme-select-menu',
+  dataAttr: 'data-theme',
+  storageKey: THEME_KEY,
+  defaultVal: 'normal',
+  labelEl: $('theme-select-label'),
+  swatchEl: $('theme-select-swatch'),
+  onSelect: (val) => {
+    THEME_CLASSES.forEach(c => document.body.classList.remove(c));
+    if (THEME_CLASSES.includes(val)) document.body.classList.add(val);
+  },
+});
 
-document.querySelectorAll('.theme-swatch').forEach(sw =>
-  sw.addEventListener('click', () => {
-    currentTheme = sw.dataset.theme;
-    localStorage.setItem(THEME_KEY, currentTheme);
-    applyTheme();
-  })
-);
+// ── Font pickers ───────────────────────────────────────────────────────────────
+const FONT_UI_MAP = {
+  inter:       "'Inter', system-ui, sans-serif",
+  system:      "system-ui, -apple-system, sans-serif",
+  handwritten: "'Caveat', cursive",
+  cursive:     "'Dancing Script', cursive",
+  serif:       "Georgia, 'Times New Roman', serif",
+};
+const FONT_CODE_MAP = {
+  jetbrains: "'JetBrains Mono', monospace",
+  fira:      "'Fira Code', monospace",
+  mono:      "'Roboto Mono', monospace",
+  ibm:       "'IBM Plex Mono', monospace",
+};
+
+setupCustomSelect({
+  wrapId: 'font-ui-select-wrap',
+  triggerId: 'font-ui-select-trigger',
+  menuId: 'font-ui-select-menu',
+  dataAttr: 'data-font-ui',
+  storageKey: 'datafmt_font_ui',
+  defaultVal: 'inter',
+  labelEl: $('font-ui-select-label'),
+  onSelect: (val) => {
+    document.documentElement.style.setProperty('--sans', FONT_UI_MAP[val] || FONT_UI_MAP.inter);
+  },
+});
+
+setupCustomSelect({
+  wrapId: 'font-code-select-wrap',
+  triggerId: 'font-code-select-trigger',
+  menuId: 'font-code-select-menu',
+  dataAttr: 'data-font-code',
+  storageKey: 'datafmt_font_code',
+  defaultVal: 'jetbrains',
+  labelEl: $('font-code-select-label'),
+  onSelect: (val) => {
+    document.documentElement.style.setProperty('--mono', FONT_CODE_MAP[val] || FONT_CODE_MAP.jetbrains);
+  },
+});
 
 // ── Nav ───────────────────────────────────────────────────────────────────────
 function goToPage(pageName) {
