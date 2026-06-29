@@ -36,7 +36,7 @@ setInterval(updateClock, 1000);
 
 // ── Theme picker ──────────────────────────────────────────────────────────────
 const THEME_KEY = 'datafmt_theme';
-const THEME_CLASSES = ['glass', 'mono']; // 'normal' = no class
+const THEME_CLASSES = ['glass', 'mono', 'monolight']; // 'normal' = no class
 let currentTheme = localStorage.getItem(THEME_KEY) || 'normal';
 
 function applyTheme() {

@@ -1296,6 +1296,10 @@ body, .card, .btn, .pill, .nav-item, textarea, #sidebar, .sidebar-clock,
 .swatch-mono {
   background: linear-gradient(135deg, #f5f5f5 0%, #d8d8d8 50%, #1a1a1a 100%);
 }
+.swatch-monolight {
+  background: linear-gradient(135deg, #ffffff 0%, #ffffff 50%, #000000 100%);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25);
+}
 
 .swatch-name {
   font-size: 0.78rem;
@@ -1556,6 +1560,276 @@ body.mono .badge-docker, body.mono .badge-custom {
   background: #1a1a1a;
   color: #e8e8e8;
 }
+
+/* My Queries / Favorites: fix hardcoded light-blue code text being invisible
+   on the light mono background */
+body.mono .lib-item-lbl  { color: var(--text); }
+body.mono .lib-item-desc { color: var(--text2); }
+body.mono .lib-item-code {
+  color: #1a1a1a !important;
+  background: #dedede !important;
+  border: none !important;
+  box-shadow:
+    inset 2px 2px 5px rgba(0,0,0,0.1),
+    inset -2px -2px 5px rgba(255,255,255,0.7);
+}
+body.mono .stat, body.mono .meta, body.mono .input-meta,
+body.mono .og-title, body.mono .card-label, body.mono .panel-label {
+  color: var(--text2);
+}
+body.mono .dash-empty { color: var(--text2); }
+body.mono .dash-empty p { color: var(--text2); }
+body.mono .ws-item-label { color: var(--text); }
+body.mono .ws-item-preview { color: var(--text3); }
+body.mono .lib-title, body.mono .ws-title { color: var(--text); }
+body.mono .lib-count, body.mono .ws-count { color: var(--text3); }
+
+/* ══════════════════════════════════════════
+   MONO LIGHT THEME — Flat Black & White
+   body.monolight
+   ══════════════════════════════════════════ */
+
+body.monolight {
+  --bg:          #ffffff;
+  --bg-card:     #ffffff;
+  --bg-inp:      #f7f7f7;
+  --bg-hov:      #f0f0f0;
+  --sb-bg:       #ffffff;
+  --border:      #1a1a1a;
+  --border-hi:   #000000;
+  --accent:      #000000;
+  --accent-dim:  rgba(0,0,0,0.06);
+  --accent-hi:   #000000;
+  --text:        #000000;
+  --text2:       #404040;
+  --text3:       #707070;
+}
+
+body.monolight { background: #ffffff; }
+body.monolight::before { content: none; }
+
+body.monolight #sidebar {
+  background: #ffffff !important;
+  border-right: 1.5px solid #000000 !important;
+  box-shadow: none;
+}
+
+body.monolight .card {
+  background: #ffffff !important;
+  border: 1.5px solid #000000 !important;
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+body.monolight .sidebar-clock {
+  background: #ffffff !important;
+  border: 1.5px solid #000000 !important;
+  box-shadow: none;
+}
+body.monolight .clock-time { color: #000000; text-shadow: none; }
+body.monolight .clock-date { color: #404040; text-shadow: none; }
+
+body.monolight .btn,
+body.monolight .pill,
+body.monolight .ql-btn,
+body.monolight .theme-toggle,
+body.monolight .nav-item,
+body.monolight .addon-card,
+body.monolight .theme-swatch {
+  background: #ffffff !important;
+  border: 1.5px solid #1a1a1a !important;
+  box-shadow: none;
+  color: #000000;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+body.monolight .btn:hover,
+body.monolight .pill:hover,
+body.monolight .ql-btn:hover,
+body.monolight .nav-item:hover,
+body.monolight .addon-card:hover,
+body.monolight .theme-swatch:hover {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-color: #000000 !important;
+}
+
+body.monolight .btn:active {
+  transform: scale(0.96);
+}
+
+body.monolight .pill.active,
+body.monolight .nav-item.active,
+body.monolight .addon-card:has(input:checked),
+body.monolight .theme-swatch.active {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-color: #000000 !important;
+  font-weight: 600;
+}
+body.monolight .nav-item.active::before { background: #000000; }
+
+body.monolight .btn.btn-primary {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-color: #000000 !important;
+}
+body.monolight .btn.btn-primary:hover {
+  background: #1a1a1a !important;
+}
+body.monolight .btn.btn-danger {
+  color: #000000;
+  border-color: #1a1a1a !important;
+}
+body.monolight .btn.btn-danger:hover {
+  background: #cc0000 !important;
+  border-color: #cc0000 !important;
+  color: #ffffff !important;
+}
+body.monolight .btn-screenshot {
+  color: #000000 !important;
+  border-color: #1a1a1a !important;
+}
+body.monolight .btn-screenshot:hover {
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+body.monolight textarea {
+  background: #ffffff !important;
+  border: 1.5px solid #1a1a1a !important;
+  color: #000000;
+  box-shadow: none;
+}
+body.monolight textarea:focus {
+  border-color: #000000 !important;
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.12) !important;
+}
+body.monolight textarea[readonly] {
+  background: #f7f7f7 !important;
+  color: #1a1a1a;
+}
+
+body.monolight .lib-search,
+body.monolight .widget-search,
+body.monolight .minput,
+body.monolight .custom-inp,
+body.monolight .sub-inp,
+body.monolight select,
+body.monolight input[type="text"] {
+  background: #ffffff !important;
+  border: 1.5px solid #1a1a1a !important;
+  color: #000000;
+  box-shadow: none;
+}
+body.monolight .lib-search:focus,
+body.monolight .widget-search:focus,
+body.monolight .minput:focus {
+  border-color: #000000 !important;
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.12) !important;
+}
+
+body.monolight .lib-item:hover,
+body.monolight .ws-item:hover,
+body.monolight .query-row:hover {
+  background: #f0f0f0 !important;
+}
+body.monolight .lib-item.flash,
+body.monolight .ws-item.flash,
+body.monolight .query-row.flash {
+  background: #000000 !important;
+}
+body.monolight .lib-item.flash .lib-item-lbl,
+body.monolight .lib-item.flash .lib-item-code,
+body.monolight .lib-item.flash .lib-item-desc {
+  color: #ffffff !important;
+}
+
+body.monolight .lib-hdr, body.monolight .ws-hdr {
+  background: #ffffff !important;
+}
+
+body.monolight .lib-item-lbl  { color: #000000; }
+body.monolight .lib-item-desc { color: #404040; }
+body.monolight .lib-item-code {
+  color: #000000 !important;
+  background: #f7f7f7 !important;
+  border: 1px solid #1a1a1a !important;
+  box-shadow: none;
+}
+
+body.monolight .lib-act-btn,
+body.monolight .csv-ov-add-btn,
+body.monolight .ws-copy-btn,
+body.monolight .query-copy-btn {
+  background: #ffffff !important;
+  border: 1.5px solid #1a1a1a !important;
+  color: #000000;
+}
+body.monolight .lib-act-btn:hover,
+body.monolight .csv-ov-add-btn:hover,
+body.monolight .ws-copy-btn:hover,
+body.monolight .query-copy-btn:hover {
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+body.monolight .lib-act-copy,
+body.monolight .query-copy-btn {
+  background: #000000 !important;
+  color: #ffffff !important;
+  font-weight: 600;
+}
+body.monolight .lib-act-copy:hover,
+body.monolight .query-copy-btn:hover {
+  background: #404040 !important;
+}
+
+body.monolight .modal {
+  background: #ffffff !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 10px 10px 0 rgba(0,0,0,0.15);
+}
+
+body.monolight .page-header { background: transparent; border-bottom: 1.5px solid #000000; }
+body.monolight .page-header h1 {
+  background: none;
+  color: #000000;
+  -webkit-text-fill-color: #000000;
+}
+
+body.monolight .dash-stat-card {
+  background: #ffffff !important;
+  border: 1.5px solid #000000 !important;
+  box-shadow: none;
+}
+body.monolight .dash-stat-icon { background: #000000; color: #ffffff; }
+
+body.monolight .csv-ov-card {
+  background: #ffffff !important;
+  border: 1.5px solid #1a1a1a !important;
+  box-shadow: none;
+}
+
+body.monolight .chk-error { background: #ffffff; color: #000000; border: 1.5px solid #cc0000; }
+body.monolight .chk-warn  { background: #ffffff; color: #000000; border: 1.5px solid #b8860b; }
+body.monolight .chk-ok    { background: #ffffff; color: #000000; border: 1.5px solid #1a1a1a; }
+body.monolight .chk-tip   { background: #f7f7f7; color: #000000; border: 1.5px solid #000000; }
+
+body.monolight .badge-sql, body.monolight .badge-linux, body.monolight .badge-git,
+body.monolight .badge-docker, body.monolight .badge-custom {
+  background: #000000;
+  color: #ffffff;
+}
+
+body.monolight .stat, body.monolight .meta, body.monolight .input-meta,
+body.monolight .og-title, body.monolight .card-label, body.monolight .panel-label {
+  color: #404040;
+}
+body.monolight .dash-empty, body.monolight .dash-empty p { color: #404040; }
+body.monolight .ws-item-label { color: #000000; }
+body.monolight .ws-item-preview { color: #707070; }
+body.monolight .lib-title, body.monolight .ws-title { color: #000000; }
+body.monolight .lib-count, body.monolight .ws-count { color: #707070; }
 
 /* ══════════════════════════════════════════
    MOBILE BOTTOM NAV
