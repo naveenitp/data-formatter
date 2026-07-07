@@ -29,7 +29,7 @@ const ADDONS = [
     id: 'trim',
     name: 'Trim whitespace',
     desc: 'Remove leading/trailing spaces from each item',
-    default: true,
+    default: false,
     apply: (items) => items.map(x => x.trim()),
   },
 
@@ -37,7 +37,7 @@ const ADDONS = [
     id: 'empty',
     name: 'Skip empty lines',
     desc: 'Ignore blank or whitespace-only lines',
-    default: true,
+    default: false,
     apply: (items) => items.filter(x => x.trim() !== ''),
   },
 
@@ -165,6 +165,14 @@ const ADDONS = [
       if (!hex) return x;
       return hex.match(/.{1,2}/g).join(':');
     }),
+  },
+
+  {
+    id: 'charCount',
+    name: 'Character count',
+    desc: 'Show input and output character counts',
+    default: false,
+    apply: null, // display-only — handled directly in format()
   },
 
   // ── Add more addons below ─────────────────────────────────────────────────

@@ -245,13 +245,28 @@ function getSep() {
 
 function format() {
   const inputEl = $('input'); if (!inputEl) return;
-  let items = applyAddons(parseItems(inputEl.value));
-  const meta = $('input-meta'); if (meta) meta.textContent = items.length + ' item' + (items.length !== 1 ? 's' : '') + ' detected';
+  const rawInput = inputEl.value;
+  let items = applyAddons(parseItems(rawInput));
+  const showCharCount = $('cb-charCount')?.checked;
+
+  const meta = $('input-meta');
+  if (meta) {
+    let metaText = items.length + ' item' + (items.length !== 1 ? 's' : '') + ' detected';
+    if (showCharCount) metaText += ' · ' + rawInput.length + ' input chars';
+    meta.textContent = metaText;
+  }
+
   let result = items.map(x => wrapQ(x, quoteStyle)).join(getSep());
   const wa = (ADDONS||[]).find(a => a.id === 'wrap');
   if (wa && $('cb-wrap')?.checked) { const o = getSubVal(wa), c = o==='('?')':o==='{'?'}':']'; result = o+result+c; }
   const out = $('output'); if (out) out.value = result;
-  const stat = $('stat'); if (stat) stat.textContent = items.length + ' items · ' + result.length + ' chars';
+
+  const stat = $('stat');
+  if (stat) {
+    let statText = items.length + ' items · ' + result.length + ' chars';
+    if (showCharCount) statText += ' (output)';
+    stat.textContent = statText;
+  }
 }
 
 document.querySelectorAll('#quote-opts .pill').forEach(el =>
@@ -1153,6 +1168,225 @@ ${sqlTableGroups.map(sheetBlock).join('')}
   Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: fname }).click();
   showToast('Excel downloaded!');
 });
+
+// ── Sample Generator ──────────────────────────────────────────────────────────
+const SAMPLER_CACHE_KEY = 'datafmt_sampler_seen';
+const SAMPLER_SEQ_KEY  = 'datafmt_sampler_seq';
+
+function loadSeenSet()  { try { return new Set(JSON.parse(localStorage.getItem(SAMPLER_CACHE_KEY)||'[]')); } catch { return new Set(); } }
+function saveSeenSet(s) { localStorage.setItem(SAMPLER_CACHE_KEY, JSON.stringify([...s])); }
+function loadSeq()      { return parseInt(localStorage.getItem(SAMPLER_SEQ_KEY)||'0',10); }
+function saveSeq(n)     { localStorage.setItem(SAMPLER_SEQ_KEY, String(n)); }
+
+let samplerSep = '\n';
+document.querySelectorAll('#sampler-sep-opts .pill').forEach(el =>
+  el.addEventListener('click', () => {
+    document.querySelectorAll('#sampler-sep-opts .pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    samplerSep = el.dataset.val;
+  })
+);
+
+// Token chip insert-into-pattern
+document.querySelectorAll('.sampler-token-chip').forEach(btn =>
+  btn.addEventListener('click', () => {
+    const pat = $('sampler-pattern');
+    if (!pat) return;
+    const pos = pat.selectionStart ?? pat.value.length;
+    const v = pat.value;
+    pat.value = v.slice(0,pos) + btn.dataset.insert + v.slice(pos);
+    pat.focus();
+    pat.selectionStart = pat.selectionEnd = pos + btn.dataset.insert.length;
+  })
+);
+
+// ── Token generators ──────────────────────────────────────────────────────────
+const FIRST_NAMES = ['Alice','Bob','Carol','David','Emma','Frank','Grace','Henry','Iris','Jack',
+  'Karen','Leo','Mia','Noah','Olivia','Paul','Quinn','Rose','Sam','Tara','Uma','Victor','Wendy',
+  'Xander','Yara','Zoe','Amit','Priya','Raj','Sana','Omar','Fatima','Lucas','Sofia','Ethan'];
+const LAST_NAMES  = ['Smith','Johnson','Williams','Brown','Jones','Garcia','Miller','Davis','Wilson',
+  'Taylor','Anderson','Thomas','Jackson','White','Harris','Martin','Thompson','Moore','Young','Lee',
+  'Patel','Kumar','Khan','Nguyen','Lopez','Gonzalez','Hernandez','Perez','Robinson','Clark'];
+const DOMAINS     = ['gmail.com','yahoo.com','outlook.com','proton.me','icloud.com','hotmail.com'];
+
+function randInt(min,max)  { return Math.floor(Math.random()*(max-min+1))+min; }
+function randChar(chars)   { return chars[Math.floor(Math.random()*chars.length)]; }
+function randStr(chars,n)  { let s=''; for(let i=0;i<n;i++) s+=randChar(chars); return s; }
+function pick(arr)         { return arr[Math.floor(Math.random()*arr.length)]; }
+function pad2(n)           { return String(n).padStart(2,'0'); }
+
+function generateToken(tok, seqRef) {
+  // {Nn} — n-digit random number (padded)
+  let m = tok.match(/^N(\d+)$/);
+  if (m) { const d=parseInt(m[1]); return String(randInt(0,Math.pow(10,d)-1)).padStart(d,'0'); }
+
+  // {NUM:min-max} — number in range
+  m = tok.match(/^NUM:(\d+)-(\d+)$/);
+  if (m) return String(randInt(parseInt(m[1]),parseInt(m[2])));
+
+  // {SEQ} — auto-incrementing sequence
+  if (tok === 'SEQ') { const v = seqRef.val++; return String(v); }
+
+  // {An} — n uppercase letters
+  m = tok.match(/^A(\d+)$/);
+  if (m) return randStr('ABCDEFGHIJKLMNOPQRSTUVWXYZ',parseInt(m[1]));
+
+  // {an} — n lowercase letters
+  m = tok.match(/^a(\d+)$/);
+  if (m) return randStr('abcdefghijklmnopqrstuvwxyz',parseInt(m[1]));
+
+  // {Wn} — n alphanumeric chars
+  m = tok.match(/^W(\d+)$/);
+  if (m) return randStr('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',parseInt(m[1]));
+
+  // {FIRST} {LAST}
+  if (tok === 'FIRST') return pick(FIRST_NAMES);
+  if (tok === 'LAST')  return pick(LAST_NAMES);
+
+  // {EMAIL}
+  if (tok === 'EMAIL') {
+    const fn = pick(FIRST_NAMES).toLowerCase();
+    const ln = pick(LAST_NAMES).toLowerCase();
+    const sep = pick(['.','-','_','']);
+    return `${fn}${sep}${ln}${randInt(1,999)}@${pick(DOMAINS)}`;
+  }
+
+  // {PHONE}
+  if (tok === 'PHONE') {
+    return `+${randInt(1,99)}-${randInt(100,999)}-${randInt(100,999)}-${randInt(1000,9999)}`;
+  }
+
+  // {DATE} or {DATE:yyyy-yyyy}
+  m = tok.match(/^DATE(?::(\d{4})-(\d{4}))?$/);
+  if (m) {
+    const y = randInt(parseInt(m[1]||'2000'), parseInt(m[2]||'2026'));
+    const mo = randInt(1,12);
+    const maxDay = new Date(y,mo,0).getDate();
+    return `${y}-${pad2(mo)}-${pad2(randInt(1,maxDay))}`;
+  }
+
+  // {TIME}
+  if (tok === 'TIME') return `${pad2(randInt(0,23))}:${pad2(randInt(0,59))}:${pad2(randInt(0,59))}`;
+
+  // {TS} — full timestamp
+  if (tok === 'TS') {
+    const y=randInt(2020,2026),mo=randInt(1,12);
+    return `${y}-${pad2(mo)}-${pad2(randInt(1,28))} ${pad2(randInt(0,23))}:${pad2(randInt(0,59))}:${pad2(randInt(0,59))}`;
+  }
+
+  // {UUID}
+  if (tok === 'UUID') {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = Math.random()*16|0;
+      return (c==='x'?r:(r&0x3|0x8)).toString(16);
+    });
+  }
+
+  // {HEX:n}
+  m = tok.match(/^HEX:(\d+)$/);
+  if (m) return randStr('0123456789ABCDEF',parseInt(m[1]));
+
+  // {BOOL}
+  if (tok === 'BOOL') return Math.random()<0.5?'true':'false';
+
+  // {PICK:a,b,c,...}
+  m = tok.match(/^PICK:(.+)$/);
+  if (m) return pick(m[1].split(',').map(s=>s.trim()));
+
+  // Unknown token — return as-is with braces
+  return '{'+tok+'}';
+}
+
+function generateValue(pattern, seqRef) {
+  return pattern.replace(/\{([^}]+)\}/g, (_,tok) => generateToken(tok, seqRef));
+}
+
+function updateCacheInfo() {
+  const info = $('sampler-cache-info');
+  if (!info) return;
+  const size = loadSeenSet().size;
+  const seq  = loadSeq();
+  if (size === 0 && seq === 0) {
+    info.textContent = 'No values cached yet.';
+  } else {
+    info.textContent = `${size.toLocaleString()} unique value${size!==1?'s':''} in cache · sequence at ${seq}`;
+  }
+}
+
+on('btn-sampler-generate','click', () => {
+  const pattern = $('sampler-pattern')?.value?.trim();
+  if (!pattern) { showToast('Enter a pattern first!'); return; }
+
+  const count = Math.min(10000, Math.max(1, parseInt($('sampler-count')?.value||'10',10)));
+  const seen = loadSeenSet();
+  let seq = loadSeq();
+  const seqRef = { val: seq };
+
+  const results = [];
+  let attempts = 0;
+  const maxAttempts = count * 50; // prevent infinite loop on exhausted spaces
+
+  while (results.length < count && attempts < maxAttempts) {
+    attempts++;
+    const val = generateValue(pattern, seqRef);
+    if (!seen.has(val)) {
+      seen.add(val);
+      results.push(val);
+    }
+  }
+
+  saveSeenSet(seen);
+  saveSeq(seqRef.val);
+
+  const sep = samplerSep === '\\n' ? '\n' : samplerSep === '\\t' ? '\t' : samplerSep;
+  const output = $('sampler-output');
+  if (output) output.value = results.join(sep);
+
+  const stat = $('sampler-stat');
+  if (stat) {
+    const skipped = attempts - results.length;
+    stat.textContent = `${results.length} values generated` +
+      (skipped > 0 ? ` · ${skipped} duplicates skipped` : '') +
+      (results.length < count ? ` · warning: pattern space may be exhausted` : '');
+  }
+
+  updateCacheInfo();
+  if (results.length > 0) showToast(`${results.length} values generated`);
+});
+
+on('btn-sampler-copy','click', () => copyText($('sampler-output')?.value));
+
+on('btn-sampler-download','click', () => {
+  const v = $('sampler-output')?.value;
+  if (!v) return;
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([v],{type:'text/plain'})),
+    download: 'sample-data.txt'
+  });
+  a.click();
+});
+
+on('btn-sampler-clear-output','click', () => {
+  const o=$('sampler-output'), s=$('sampler-stat');
+  if(o) o.value='';
+  if(s) s.textContent='';
+  // Note: does NOT clear the seen cache — output cleared, history kept
+});
+
+on('btn-sampler-clear-cache','click', () => {
+  if (!confirm('Clear all cached values? Previously generated values may repeat again.')) return;
+  localStorage.removeItem(SAMPLER_CACHE_KEY);
+  localStorage.removeItem(SAMPLER_SEQ_KEY);
+  updateCacheInfo();
+  showToast('Cache cleared!');
+});
+
+// Wire up "sampler" page navigation to refresh cache info
+const _origGoToPage = goToPage;
+goToPage = function(pageName) {
+  _origGoToPage(pageName);
+  if (pageName === 'sampler') updateCacheInfo();
+};
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 buildAddonGrid();
